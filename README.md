@@ -1,6 +1,6 @@
 # Ovo
 
-**Ovo is a small toy language**
+**Ovo is a small toy/side-project language**
 
 Ovo will be either interpreted, or compiled down to Elixir. It is a reimplementation from scratch of a previous (private) implementation in typescript.
 
