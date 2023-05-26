@@ -21,5 +21,20 @@ defmodule Ovo.Token do
   @typedoc """
   An Ovo Token.
   """
-  @type t :: t_string | t_equals | t_number | t_symbol | t_arrow | t_if | t_else | t_then | t_end | t_comma | t_open_paren | t_open_bracket | t_close_paren | t_close_bracket | t_backslash
+  @type t ::
+          t_string
+          | t_equals
+          | t_number
+          | t_symbol
+          | t_arrow
+          | t_if
+          | t_else
+          | t_then
+          | t_end
+          | t_comma
+          | t_open_paren
+          | t_open_bracket
+          | t_close_paren
+          | t_close_bracket
+          | t_backslash
 end

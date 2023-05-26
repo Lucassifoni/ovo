@@ -1,6 +1,12 @@
 defmodule Ovo.Tokenizer do
   @digits ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-
+  @repeatable_states [
+    :open_paren,
+    :close_paren,
+    :end,
+    :open_bracket,
+    :close_bracket
+  ]
   @doc """
   Tokenizes the input string
 
@@ -25,10 +31,17 @@ defmodule Ovo.Tokenizer do
   @doc """
   Goes to next state while accumulating a token if the buffer wasn't empty, mainly for deduplication purposes.
   """
-  @spec accumulate([String.t()], atom(), list(Ovo.Token.t()), binary(), atom()) :: list(Ovo.Token.t())
-  def accumulate(rest, state, out, buf, next_state, next_buf \\ "") do
-    if buf != "" do
-      walk(rest, next_state, [{state, buf} | out], next_buf)
+  @spec accumulate(
+          [String.t()],
+          atom(),
+          list(Ovo.Token.t()),
+          binary() | nil,
+          atom(),
+          binary() | nil
+        ) :: list(Ovo.Token.t())
+  def accumulate(rest, prev_state, out, buf, next_state, next_buf \\ "") do
+    if prev_state != next_state or prev_state in @repeatable_states do
+      walk(rest, next_state, [{prev_state, buf} | out], next_buf)
     else
       walk(rest, next_state, out, next_buf)
     end
@@ -62,18 +75,25 @@ defmodule Ovo.Tokenizer do
   def walk(graphemes), do: walk(graphemes, :undefined, [], "")
 
   @spec walk([String.t()], atom(), list(Ovo.Token.t()), String.t()) :: list(Ovo.Token.t())
-  def walk(defpat("\\`"), :string, out, buf), do: walk(tail, :string, out, buf <> "`")
+  def walk(defpat("\\`"), :string, out, buf),
+    do: accumulate(tail, :string, out, buf <> "`", :string, buf <> "`")
+
   def walk(defpat("`"), :string, out, buf), do: accumulate(tail, :string, out, buf, :undefined)
-  def walk([h | t], :string, out, buf), do: walk(t, :string, out, buf <> h)
+
+  def walk([h | t], :string, out, buf),
+    do: accumulate(t, :string, out, buf <> h, :string, buf <> h)
 
   def walk(["." | t], :number, out, buf) do
     if has_dot?(buf) do
-      walk(["."|t], :undefined, out, buf)
+      walk(["." | t], :undefined, out, buf)
     else
-      walk(t, :number, out, buf <> ".")
+      accumulate(t, :number, out, buf <> ".", :number, buf <> ".")
     end
   end
-  def walk([a | rest], :number, out, buf) when a in @digits, do: walk(rest, :number, out, buf <> a)
+
+  def walk([a | rest], :number, out, buf) when a in @digits,
+    do: accumulate(rest, :number, out, buf <> a, :number)
+
   def walk(input, :number, out, buf), do: accumulate(input, :number, out, buf, :undefined)
 
   def walk(defpat("`"), state, out, buf), do: accumulate(tail, state, out, buf, :string)
@@ -85,18 +105,25 @@ defmodule Ovo.Tokenizer do
   def walk(defpat("end"), state, out, buf), do: accumulate(tail, state, out, buf, :end, nil)
   def walk(defpat(","), state, out, buf), do: accumulate(tail, state, out, buf, :comma, nil)
   def walk(defpat("("), state, out, buf), do: accumulate(tail, state, out, buf, :open_paren, nil)
-  def walk(defpat("["), state, out, buf), do: accumulate(tail, state, out, buf, :open_bracket, nil)
-  def walk(defpat(")"), state, out, buf), do: accumulate(tail, state, out, buf, :close_paren, nil)
-  def walk(defpat("]"), state, out, buf), do: accumulate(tail, state, out, buf, :close_bracket, nil)
-  def walk(defpat("\\"), state, out, buf), do: accumulate(tail, state, out, buf, :backslash, nil)
 
+  def walk(defpat("["), state, out, buf),
+    do: accumulate(tail, state, out, buf, :open_bracket, nil)
+
+  def walk(defpat(")"), state, out, buf), do: accumulate(tail, state, out, buf, :close_paren, nil)
+
+  def walk(defpat("]"), state, out, buf),
+    do: accumulate(tail, state, out, buf, :close_bracket, nil)
+
+  def walk(defpat("\\"), state, out, buf), do: accumulate(tail, state, out, buf, :backslash, nil)
 
   def walk([a | rest], state, out, buf) do
     cond do
       is_whitespace?(a) ->
-        accumulate(rest, state, out, buf, :undefined)
+        accumulate(rest, state, out, buf, :undefined, nil)
+
       is_numeric?(a) ->
-        walk(rest, :number, out, a)
+        accumulate(rest, state, out, buf, :number, a)
+
       true ->
         if is_nil(buf) do
           walk(rest, :symbol, [{state, nil} | out], a)
@@ -107,5 +134,5 @@ defmodule Ovo.Tokenizer do
   end
 
   def walk([], state, out, buf),
-    do: if(buf != "", do: [{state, buf} | out], else: out) |> Enum.reverse()
+    do: [{state, buf} | out] |> Enum.reverse() |> Enum.filter(fn {k, _v} -> k != :undefined end)
 end

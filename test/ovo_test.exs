@@ -92,7 +92,7 @@ defmodule OvoTest do
 
   test "Tokenizes commas, lists, parents, backslashes" do
     program = """
-    \\a, b -> ([a, b, add(b, 5)])
+    \\a, b -> ( [ a , b, add(b, 5) ] )
     """
 
     tokens = [
@@ -118,6 +118,24 @@ defmodule OvoTest do
     ]
 
     assert Ovo.tokenize(program) == tokens
+  end
+
+  test "Complex expression" do
+    assert Ovo.tokenize("if foo then 5 else [4, 5, 6] end") == [
+             if: nil,
+             symbol: "foo",
+             then: nil,
+             number: "5",
+             else: nil,
+             open_bracket: nil,
+             number: "4",
+             comma: nil,
+             number: "5",
+             comma: nil,
+             number: "6",
+             close_bracket: nil,
+             end: nil
+           ]
   end
 
   def parse(input), do: input |> Ovo.tokenize()
