@@ -3,7 +3,7 @@ defmodule Ovo.Token do
   An Ovo Token, a tuple carrying the token kind and optional string representation.
   """
   @type t_string :: {:string, String.t()}
-  @type t_nonstring :: {:nonstring, String.t()}
+  @type t_symbol :: {:symbol, String.t()}
   @type t_arrow :: {:arrow, nil}
   @type t_if :: {:if, nil}
   @type t_else :: {:else, nil}
@@ -21,5 +21,5 @@ defmodule Ovo.Token do
   @typedoc """
   An Ovo Token.
   """
-  @type t :: t_string | t_equals | t_number | t_nonstring | t_arrow | t_if | t_else | t_then | t_end | t_comma | t_open_paren | t_open_bracket | t_close_paren | t_close_bracket | t_backslash
+  @type t :: t_string | t_equals | t_number | t_symbol | t_arrow | t_if | t_else | t_then | t_end | t_comma | t_open_paren | t_open_bracket | t_close_paren | t_close_bracket | t_backslash
 end

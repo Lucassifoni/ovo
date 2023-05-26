@@ -1,10 +1,13 @@
 defmodule OvoTest do
   use ExUnit.Case
   doctest Ovo
+  doctest Ovo.Tokenizer
+  doctest Ovo.Parser
+  doctest Ovo.Combinators
 
   test "Tokenizes input, removing whitespace." do
     for {program, tokens} <- [
-          {"foo = 5", [{:nonstring, "foo"}, {:equals, nil}, {:number, "5"}]}
+          {"foo = 5", [{:symbol, "foo"}, {:equals, nil}, {:number, "5"}]}
         ] do
       assert Ovo.tokenize(program) == tokens
     end
@@ -12,7 +15,7 @@ defmodule OvoTest do
 
   test "Tokenizes input, correctly handling string beginning and end" do
     for {program, tokens} <- [
-          {"foo = `heya`", [{:nonstring, "foo"}, {:equals, nil}, {:string, "heya"}]}
+          {"foo = `heya`", [{:symbol, "foo"}, {:equals, nil}, {:string, "heya"}]}
         ] do
       assert Ovo.tokenize(program) == tokens
     end
@@ -22,10 +25,10 @@ defmodule OvoTest do
     for {program, tokens} <- [
           {"foo = `heya`\nbar = `baz\\`baz`",
            [
-             {:nonstring, "foo"},
+             {:symbol, "foo"},
              {:equals, nil},
              {:string, "heya"},
-             {:nonstring, "bar"},
+             {:symbol, "bar"},
              {:equals, nil},
              {:string, "baz`baz"}
            ]}
@@ -43,21 +46,21 @@ defmodule OvoTest do
             baz(a,b,c,d)
             """,
             [
-              {:nonstring, "foo"},
+              {:symbol, "foo"},
               {:equals, nil},
               {:number, "5"},
-              {:nonstring, "bar"},
+              {:symbol, "bar"},
               {:equals, nil},
               {:string, "stringy` value"},
-              {:nonstring, "baz"},
+              {:symbol, "baz"},
               {:open_paren, nil},
-              {:nonstring, "a"},
+              {:symbol, "a"},
               {:comma, nil},
-              {:nonstring, "b"},
+              {:symbol, "b"},
               {:comma, nil},
-              {:nonstring, "c"},
+              {:symbol, "c"},
               {:comma, nil},
-              {:nonstring, "d"},
+              {:symbol, "d"},
               {:close_paren, nil}
             ]
           }
@@ -73,11 +76,11 @@ defmodule OvoTest do
     """
 
     tokens = [
-      {:nonstring, "bar"},
+      {:symbol, "bar"},
       {:arrow, nil},
-      {:nonstring, "baz"},
+      {:symbol, "baz"},
       {:if, nil},
-      {:nonstring, "bar"},
+      {:symbol, "bar"},
       {:then, nil},
       {:number, "5"},
       {:else, nil},
@@ -89,22 +92,27 @@ defmodule OvoTest do
 
   test "Tokenizes commas, lists, parents, backslashes" do
     program = """
-    \\a, b -> ([a, b, c])
+    \\a, b -> ([a, b, add(b, 5)])
     """
 
     tokens = [
       {:backslash, nil},
-      {:nonstring, "a"},
+      {:symbol, "a"},
       {:comma, nil},
-      {:nonstring, "b"},
+      {:symbol, "b"},
       {:arrow, nil},
       {:open_paren, nil},
       {:open_bracket, nil},
-      {:nonstring, "a"},
+      {:symbol, "a"},
       {:comma, nil},
-      {:nonstring, "b"},
+      {:symbol, "b"},
       {:comma, nil},
-      {:nonstring, "c"},
+      {:symbol, "add"},
+      {:open_paren, nil},
+      {:symbol, "b"},
+      {:comma, nil},
+      {:number, "5"},
+      {:close_paren, nil},
       {:close_bracket, nil},
       {:close_paren, nil}
     ]
@@ -112,34 +120,5 @@ defmodule OvoTest do
     assert Ovo.tokenize(program) == tokens
   end
 
-  def parse(input), do: input |> Ovo.Tokenizer.tokenize() |> Ovo.Parser.parse()
-
-  test "Parses a simple expression" do
-    assert parse("foo = bar\nbaz = 5.25") == %Ovo.Ast{
-             kind: :root,
-             nodes: [
-               [
-                 %Ovo.Ast{
-                   kind: :assignment,
-                   nodes: [
-                     %Ovo.Ast{kind: :symbol, nodes: nil, value: "foo"},
-                     %Ovo.Ast{kind: :nonstring, nodes: nil, value: "bar"}
-                   ],
-                   value: nil
-                 }
-               ],
-               [
-                 %Ovo.Ast{
-                   kind: :assignment,
-                   nodes: [
-                     %Ovo.Ast{kind: :symbol, nodes: nil, value: "baz"},
-                     %Ovo.Ast{kind: :number, nodes: nil, value: "5.25"}
-                   ],
-                   value: nil
-                 }
-               ]
-             ],
-             value: nil
-           }
-  end
+  def parse(input), do: input |> Ovo.tokenize()
 end

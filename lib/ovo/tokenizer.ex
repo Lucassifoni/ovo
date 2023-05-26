@@ -4,8 +4,8 @@ defmodule Ovo.Tokenizer do
   @doc """
   Tokenizes the input string
 
-  iex> Ovo.tokenize("foo = `bar`")
-  [{:nonstring, "foo"}, {:nonstring, "="}, {:string, "bar"}]
+      iex> Ovo.tokenize("foo = `bar`")
+      [{:symbol, "foo"}, {:equals, nil}, {:string, "bar"}]
   """
   @spec tokenize(String.t()) :: list(Ovo.Token.t())
   def tokenize(input) do
@@ -35,6 +35,9 @@ defmodule Ovo.Tokenizer do
   end
 
   @spec binary_to_pattern(String.t()) :: any
+  @doc """
+
+  """
   def binary_to_pattern(bin) do
     [first | rest] = String.graphemes(bin) |> Enum.reverse()
 
@@ -89,7 +92,6 @@ defmodule Ovo.Tokenizer do
 
 
   def walk([a | rest], state, out, buf) do
-
     cond do
       is_whitespace?(a) ->
         accumulate(rest, state, out, buf, :undefined)
@@ -97,9 +99,9 @@ defmodule Ovo.Tokenizer do
         walk(rest, :number, out, a)
       true ->
         if is_nil(buf) do
-          walk(rest, :nonstring, [{state, nil} | out], a)
+          walk(rest, :symbol, [{state, nil} | out], a)
         else
-          walk(rest, :nonstring, out, buf <> a)
+          walk(rest, :symbol, out, buf <> a)
         end
     end
   end

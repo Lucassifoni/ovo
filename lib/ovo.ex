@@ -1,8 +1,10 @@
 defmodule Ovo do
   @moduledoc """
   Ovo is a small data transformation language hosted in Elixir.
-  # Sample syntax
-  ```
+
+  ### Sample syntax
+
+  ```elixir
   bar = 6
   age = add(access(data, `age`), bar)
 
