@@ -25,6 +25,9 @@ defmodule Ovo do
   fibs(10)
   ```
   """
+
   @spec tokenize(String.t()) :: [Ovo.Token.t()]
   def tokenize(input), do: Ovo.Tokenizer.tokenize(input)
+
+  def parse(tokens), do: Ovo.Parser.parse(tokens)
 end

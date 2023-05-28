@@ -138,5 +138,26 @@ defmodule OvoTest do
            ]
   end
 
-  def parse(input), do: input |> Ovo.tokenize()
+  def parse(input), do: input |> Ovo.tokenize() |> Ovo.parse()
+
+  test "Fully parses complex expressions" do
+    {:ok, _, []} = parse("if (foo) then ([5]) else ([4, [5, 4, []], [[[]]], 6]) (baz) end")
+  end
+
+  test "Parses an argless function call" do
+    {:ok, [%Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :call}}], []} = parse("foo()")
+  end
+
+  test "Parses a single-arg function call" do
+    {:ok,
+     [
+       %Ovo.Ast{
+         kind: :expr,
+         value: %Ovo.Ast{
+           kind: :call,
+           nodes: [%Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :symbol}}]
+         }
+       }
+     ], []} = parse("foo(bar)")
+  end
 end
