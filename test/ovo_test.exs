@@ -190,14 +190,9 @@ defmodule OvoTest do
      }, []} = parse("foo(bar, baz)")
   end
 
-  def parse_print_parse(input, show \\ false) do
+  def parse_print_parse(input) do
     {:ok, parsed, _} = input |> parse()
     printed = parsed |> Ovo.Printer.print()
-
-    if show do
-      IO.inspect(printed)
-    end
-
     {:ok, reparsed, _} = printed |> parse()
     assert parsed == reparsed
   end
@@ -246,6 +241,6 @@ defmodule OvoTest do
     end
     """
 
-    parse_print_parse(code, true)
+    parse_print_parse(code)
   end
 end
