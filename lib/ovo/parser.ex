@@ -174,6 +174,64 @@ defmodule Ovo.Parser do
     C.any([&parse_single_arg_call/1, &parse_multiple_arg_call/1, &parse_argless_call/1]).(tokens)
   end
 
+  def parse_lambda(tokens) do
+    case C.all([
+           C.match(:backslash),
+           C.any([
+             &parse_multiple_arity_lambda/1,
+             &parse_single_arity_lambda/1,
+             &parse_zero_arity_lambda/1
+           ]),
+           C.match(:arrow),
+           &parse_block/1,
+           &parse_end/1
+         ]).(tokens) do
+      {:ok, a, rest} ->
+        case a do
+          [c, b] ->
+            {:ok, Ast.lambda([c], b), rest}
+
+          other when is_list(other) ->
+            l = length(other)
+            args = other |> Enum.slice(0..(l - 2))
+            body = other |> List.last()
+            {:ok, Ast.lambda(args, body), rest}
+
+          _ ->
+            raise "This branch should never match."
+        end
+
+      b ->
+        b
+    end
+  end
+
+  def parse_single_arity_lambda(tokens) do
+    case parse_symbol(tokens) do
+      {:ok, node, rest} -> {:ok, node, rest}
+      b -> b
+    end
+  end
+
+  def parse_multiple_arity_lambda(tokens) do
+    case C.all([
+           C.repeat(
+             C.then(
+               &parse_symbol/1,
+               &parse_comma/1
+             )
+           ),
+           &parse_symbol/1
+         ]).(tokens) do
+      {:ok, nodes, rest} -> {:ok, [nodes], rest}
+      b -> b
+    end
+  end
+
+  def parse_zero_arity_lambda(tokens), do: {:ok, nil, tokens}
+
+  def parse_lambda_body(tokens), do: parse_block(tokens)
+
   @doc """
   Parses an expression.
     iex> alias Ovo.Tokenizer, as: Tok
@@ -181,9 +239,13 @@ defmodule Ovo.Parser do
     iex> {:ok, _, []} = Ovo.Parser.parse_expression(tokens)
   """
   def parse_expression(tokens) do
-    case C.any([&parse_if/1, &parse_call/1, &parse_parenthesized_expression/1, &parse_value/1]).(
-           tokens
-         ) do
+    case C.any([
+           &parse_lambda/1,
+           &parse_if/1,
+           &parse_call/1,
+           &parse_parenthesized_expression/1,
+           &parse_value/1
+         ]).(tokens) do
       {:ok, nodes, rest} -> {:ok, Ast.expr(nodes), rest}
       b -> b
     end

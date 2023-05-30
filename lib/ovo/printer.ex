@@ -19,6 +19,14 @@ defmodule Ovo.Printer do
     "#{val}"
   end
 
+  def print_node(%Ovo.Ast{kind: :lambda, value: head, nodes: body}) do
+    """
+      \\#{Enum.map_join(head, ", ", &print_node/1)} ->
+        #{print_node(body)}
+      end
+    """
+  end
+
   def print_node(%Ovo.Ast{kind: :float, value: val}) do
     "#{val}"
   end

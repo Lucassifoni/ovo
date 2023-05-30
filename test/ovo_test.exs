@@ -190,9 +190,14 @@ defmodule OvoTest do
      }, []} = parse("foo(bar, baz)")
   end
 
-  def parse_print_parse(input) do
+  def parse_print_parse(input, show \\ false) do
     {:ok, parsed, _} = input |> parse()
     printed = parsed |> Ovo.Printer.print()
+
+    if show do
+      IO.inspect(printed)
+    end
+
     {:ok, reparsed, _} = printed |> parse()
     assert parsed == reparsed
   end
@@ -212,5 +217,35 @@ defmodule OvoTest do
     """
 
     parse_print_parse(code)
+  end
+
+  test "0-arity Lambda print loop" do
+    code = """
+    \\ ->
+      add(a, b)
+    end
+    """
+
+    parse_print_parse(code)
+  end
+
+  test "1-arity Lambda print loop" do
+    code = """
+    \\a ->
+      add(a, b)
+    end
+    """
+
+    parse_print_parse(code)
+  end
+
+  test "n-arity Lambda print loop" do
+    code = """
+    \\a, b ->
+      add(a, b)
+    end
+    """
+
+    parse_print_parse(code, true)
   end
 end

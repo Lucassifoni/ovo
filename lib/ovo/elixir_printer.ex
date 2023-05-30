@@ -15,6 +15,14 @@ defmodule Ovo.ElixirPrinter do
     "#{val}"
   end
 
+  def print_node(%Ovo.Ast{kind: :lambda, value: head, nodes: body}) do
+    """
+      fn (#{Enum.map_join(head, ", ", &print_node/1)}) ->
+        #{print_node(body)}
+      end
+    """
+  end
+
   def print_node(%Ovo.Ast{kind: :integer, value: val}) do
     "#{val}"
   end

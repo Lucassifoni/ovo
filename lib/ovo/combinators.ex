@@ -36,6 +36,10 @@ defmodule Ovo.Combinators do
     end
   end
 
+  def nothing(tokens) do
+    {:ok, [], tokens}
+  end
+
   @doc """
   Utility to quickly match a valueless token, with reduced duplication in Ovo.Parser
   """

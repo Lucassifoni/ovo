@@ -24,5 +24,7 @@ defmodule Ovo.Ast do
 
   def condition([a, b, c]), do: make(:condition, nil, [a, b, c])
 
+  def lambda(head, body), do: make(:lambda, head, body)
+
   def call(val, children \\ []), do: make(:call, val, children)
 end
