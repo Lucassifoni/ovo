@@ -2,7 +2,7 @@ defmodule Ovo.Parser do
   alias Ovo.Ast
   alias Ovo.Combinators, as: C
 
-  def err(tokens), do: {:error, nil, tokens}
+  def err(tokens), do: {:error, [], tokens}
   def ok(result, rest), do: {:ok, result, rest}
 
   def parse_number([{:number, val} | rest] = tokens) do
@@ -39,8 +39,7 @@ defmodule Ovo.Parser do
            &parse_close_bracket/1
          ]).(tokens) do
       {:ok, nodes, rest} ->
-        {:ok, Ast.list(nodes |> List.flatten() |> Enum.filter(&(!is_nil(&1))) |> Enum.reverse()),
-         rest}
+        {:ok, Ast.list(nodes), rest}
 
       b ->
         b
@@ -56,7 +55,7 @@ defmodule Ovo.Parser do
 
   def parse_single_element_list(tokens) do
     case C.all([C.match(:open_bracket), &parse_expression/1, C.match(:close_bracket)]).(tokens) do
-      {:ok, node, rest} -> {:ok, Ast.list([node]), rest}
+      {:ok, node, rest} -> {:ok, Ast.list(node), rest}
       b -> b
     end
   end
@@ -70,8 +69,8 @@ defmodule Ovo.Parser do
     case C.any([&parse_multiple_element_list/1, &parse_empty_list/1, &parse_single_element_list/1]).(
            tokens
          ) do
-      {:ok, nodes, rest} ->
-        {:ok, Ast.list(nodes), rest}
+      {:ok, node, rest} ->
+        {:ok, node, rest}
 
       b ->
         b
@@ -86,16 +85,30 @@ defmodule Ovo.Parser do
       iex> Ovo.Parser.parse_value([{:string, "foo"}])
       {:ok, %Ovo.Ast{kind: :string, nodes: [], value: "foo"}, []}
       iex> Ovo.Parser.parse_value([{:arrow, nil}])
-      {:error, nil, [{:arrow, nil}]}
+      {:error, [], [{:arrow, nil}]}
   """
   def parse_value(tokens),
     do: C.any([&parse_number/1, &parse_string/1, &parse_symbol/1, &parse_list/1]).(tokens)
 
-  def parse_parenthesized_expression(tokens),
-    do: C.all([C.match(:open_paren), &parse_expression/1, &parse_close_paren/1]).(tokens)
+  def parse_parenthesized_expression(tokens) do
+    case C.all([C.match(:open_paren), &parse_expression/1, &parse_close_paren/1]).(tokens) do
+      {:ok, nodes, rest} ->
+        case nodes do
+          [%Ast{kind: :expr} = n] -> {:ok, n.value, rest}
+          b -> b
+        end
 
-  def parse_if_head(tokens),
-    do: C.all([C.match(:if), &parse_expression/1, C.match(:then)]).(tokens)
+      b ->
+        b
+    end
+  end
+
+  def parse_if_head(tokens) do
+    case C.all([C.match(:if), &parse_expression/1, C.match(:then)]).(tokens) do
+      {:ok, nodes, rest} -> {:ok, nodes, rest}
+      b -> b
+    end
+  end
 
   def parse_else(tokens), do: C.match(:else).(tokens)
   def parse_end(tokens), do: C.match(:end).(tokens)
@@ -103,18 +116,18 @@ defmodule Ovo.Parser do
   def parse_if(tokens) do
     case C.all([
            &parse_if_head/1,
-           C.repeat(&parse_expression/1),
+           C.repeat(&parse_block/1),
            &parse_else/1,
-           C.repeat(&parse_expression/1),
+           C.repeat(&parse_block/1),
            &parse_end/1
          ]).(tokens) do
       {:ok, nodes, rest} ->
-        case nodes |> Enum.filter(&(!is_nil(&1))) do
+        case nodes do
           [predicate, true_branch, false_branch] ->
             {:ok, Ast.condition([predicate, true_branch, false_branch]), rest}
 
           _ ->
-            throw("If parsing failed : three lists of nodes should have been found.")
+            throw("If parsing failed : three nodes should have been found.")
         end
 
       b ->
@@ -127,7 +140,7 @@ defmodule Ovo.Parser do
            tokens
          ) do
       {:ok, nodes, rest} ->
-        case nodes |> Enum.filter(&(!is_nil(&1))) do
+        case nodes do
           [a, b] -> {:ok, Ast.call(a, [b]), rest}
           b -> b
         end
@@ -138,12 +151,16 @@ defmodule Ovo.Parser do
   end
 
   def parse_multiple_arg_call(tokens) do
-    C.all([
-      &parse_symbol/1,
-      C.match(:open_paren),
-      C.then(C.repeat(C.then(&parse_expression/1, &parse_comma/1)), &parse_expression/1),
-      C.match(:close_paren)
-    ]).(tokens)
+    case C.all([
+           &parse_symbol/1,
+           C.match(:open_paren),
+           C.repeat(C.then(&parse_expression/1, &parse_comma/1)),
+           &parse_expression/1,
+           C.match(:close_paren)
+         ]).(tokens) do
+      {:ok, [a | b], rest} -> {:ok, Ast.call(a, b), rest}
+      b -> b
+    end
   end
 
   def parse_argless_call(tokens) do
@@ -172,7 +189,17 @@ defmodule Ovo.Parser do
     end
   end
 
+  def parse_block(tokens) do
+    case C.repeat(&parse_expression/1).(tokens) do
+      {:ok, nodes, rest} -> {:ok, Ast.block(nodes), rest}
+      b -> b
+    end
+  end
+
   def parse(tokens) do
-    C.repeat(&parse_expression/1).(tokens)
+    case C.repeat(&parse_expression/1).(tokens) do
+      {:ok, ast, []} -> {:ok, Ast.root(ast), []}
+      b -> b
+    end
   end
 end

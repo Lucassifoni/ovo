@@ -7,6 +7,8 @@ defmodule Ovo.Ast do
   def make(kind \\ :root, value \\ nil, children \\ []),
     do: %__MODULE__{kind: kind, nodes: children, value: value}
 
+  def root(children), do: make(:root, nil, children)
+
   def float(val), do: make(:float, val)
   def integer(val), do: make(:integer, val)
   def string(val), do: make(:string, val)
@@ -15,7 +17,10 @@ defmodule Ovo.Ast do
 
   def list(children), do: make(:list, nil, children)
 
+  def expr([val]), do: make(:expr, val, [])
   def expr(val), do: make(:expr, val, [])
+
+  def block(nodes), do: make(:block, nil, nodes)
 
   def condition([a, b, c]), do: make(:condition, nil, [a, b, c])
 

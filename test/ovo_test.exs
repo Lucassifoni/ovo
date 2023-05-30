@@ -145,19 +145,72 @@ defmodule OvoTest do
   end
 
   test "Parses an argless function call" do
-    {:ok, [%Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :call}}], []} = parse("foo()")
+    {:ok,
+     %Ovo.Ast{
+       kind: :root,
+       value: nil,
+       nodes: [%Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :call}}]
+     }, []} = parse("foo()")
   end
 
   test "Parses a single-arg function call" do
     {:ok,
-     [
-       %Ovo.Ast{
-         kind: :expr,
-         value: %Ovo.Ast{
-           kind: :call,
-           nodes: [%Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :symbol}}]
+     %Ovo.Ast{
+       kind: :root,
+       value: nil,
+       nodes: [
+         %Ovo.Ast{
+           kind: :expr,
+           value: %Ovo.Ast{
+             kind: :call,
+             nodes: [%Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :symbol}}]
+           }
          }
-       }
-     ], []} = parse("foo(bar)")
+       ]
+     }, []} = parse("foo(bar)")
+  end
+
+  test "Parses a multi-arg function call" do
+    {:ok,
+     %Ovo.Ast{
+       kind: :root,
+       value: nil,
+       nodes: [
+         %Ovo.Ast{
+           kind: :expr,
+           value: %Ovo.Ast{
+             kind: :call,
+             nodes: [
+               %Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :symbol}},
+               %Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :symbol}}
+             ]
+           }
+         }
+       ]
+     }, []} = parse("foo(bar, baz)")
+  end
+
+  def parse_print_parse(input) do
+    {:ok, parsed, _} = input |> parse()
+    printed = parsed |> Ovo.Printer.print()
+    {:ok, reparsed, _} = printed |> parse()
+    assert parsed == reparsed
+  end
+
+  test "Print loop" do
+    parse_print_parse("foo(bar)")
+  end
+
+  test "Complex print loop" do
+    code = """
+    if (foo) then
+      ([5])
+    else
+      ([4, [5, 4, []], [[[]]], 6])
+      (baz)
+    end
+    """
+
+    parse_print_parse(code)
   end
 end
