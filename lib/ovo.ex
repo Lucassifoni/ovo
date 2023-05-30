@@ -30,4 +30,23 @@ defmodule Ovo do
   def tokenize(input), do: Ovo.Tokenizer.tokenize(input)
 
   def parse(tokens), do: Ovo.Parser.parse(tokens)
+
+  def run_as_elixir(input, bindings \\ []) do
+    tokens = Ovo.Tokenizer.tokenize(input)
+    {:ok, ast, _} = Ovo.Parser.parse(tokens)
+    code = Ovo.ElixirPrinter.print(ast)
+    IO.inspect(code)
+    Code.eval_string(code, bindings)
+  end
+
+  def demo() do
+    {res, _bindings} = run_as_elixir("""
+        if (foo) then
+        ([5])
+      else
+        ([4, [5, 4, []], [[[]]], 6])
+      end
+    """, foo: false)
+    res
+  end
 end
