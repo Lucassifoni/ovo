@@ -2,6 +2,7 @@ defmodule Ovo.Token do
   @moduledoc """
   An Ovo Token, a tuple carrying the token kind and optional string representation.
   """
+
   @type t_string :: {:string, String.t()}
   @type t_symbol :: {:symbol, String.t()}
   @type t_arrow :: {:arrow, nil}

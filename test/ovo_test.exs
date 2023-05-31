@@ -41,14 +41,14 @@ defmodule OvoTest do
     for {program, tokens} <- [
           {
             """
-            foo = 5
+            foo = 500
             bar = `stringy\\` value`
             baz(a,b,c,d)
             """,
             [
               {:symbol, "foo"},
               {:equals, nil},
-              {:number, "5"},
+              {:number, "500"},
               {:symbol, "bar"},
               {:equals, nil},
               {:string, "stringy` value"},
@@ -242,5 +242,36 @@ defmodule OvoTest do
     """
 
     parse_print_parse(code)
+  end
+
+  test "assignments" do
+    for snippet <- ["foo = 5", "foo = bar", "foo = add(5, bar)"] do
+      parse_print_parse(snippet)
+    end
+  end
+
+  test "full program" do
+    program = """
+    bar = 6
+    age = add(access(data, `age`), bar)
+
+    say_hi = \\name, age ->
+      join([name, `has the age`, to_string(age)], ``)
+    end
+
+    say_hi(access(data, `name`), age)
+
+    fibs = \\a ->
+      if greater_or_equals(a, 2) then
+          add(fibs(subtract(a, 1)), fibs(subtract(a, 2)))
+      else
+          1
+      end
+    end
+
+    fibs(10)
+    """
+
+    parse_print_parse(program)
   end
 end

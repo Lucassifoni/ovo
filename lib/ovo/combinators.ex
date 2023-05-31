@@ -1,6 +1,6 @@
 defmodule Ovo.Combinators do
   @moduledoc """
-  Parser combinators. Samples operate on primitives instead of ovo tokens for clarity.
+  Parser combinators. Samples below operate on primitives instead of ovo tokens for clarity.
   """
 
   def sample_one([1 | rest]), do: {:ok, [1], rest}

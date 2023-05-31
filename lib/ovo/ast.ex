@@ -2,6 +2,7 @@ defmodule Ovo.Ast do
   @moduledoc """
   Defines an AST node for Ovo.
   """
+
   defstruct [:kind, :nodes, :value]
 
   def make(kind \\ :root, value \\ nil, children \\ []),
@@ -20,6 +21,7 @@ defmodule Ovo.Ast do
   def expr([val]), do: make(:expr, val, [])
   def expr(val), do: make(:expr, val, [])
 
+  def assignment(symbol, expr), do: make(:assignment, symbol, expr)
   def block(nodes), do: make(:block, nil, nodes)
 
   def condition([a, b, c]), do: make(:condition, nil, [a, b, c])

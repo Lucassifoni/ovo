@@ -1,4 +1,8 @@
 defmodule Ovo.ElixirPrinter do
+  @moduledoc """
+  Prints an Ovo Abstract Syntax Tree to Elixir code.
+  """
+
   def print(%Ovo.Ast{} = ast) do
     Enum.reduce(ast.nodes, "", fn node, output ->
       output <> print_node(node) <> "\n"
@@ -13,6 +17,10 @@ defmodule Ovo.ElixirPrinter do
 
   def print_node(%Ovo.Ast{kind: :symbol, value: val}) do
     "#{val}"
+  end
+
+  def print_node(%Ovo.Ast{kind: :assignment, value: sym, nodes: expr}) do
+    "#{sym.value} = #{print_node(expr)}"
   end
 
   def print_node(%Ovo.Ast{kind: :lambda, value: head, nodes: body}) do

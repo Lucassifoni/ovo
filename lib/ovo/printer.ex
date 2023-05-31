@@ -1,4 +1,7 @@
 defmodule Ovo.Printer do
+  @moduledoc """
+  Prints an Ovo.Ast to Ovo code. Note that non-significant symbols like parentheses in parenthesized expressions are discarded (until the eventual introductions of operators and precedence problems).
+  """
   def print(%Ovo.Ast{} = ast) do
     Enum.reduce(ast.nodes, "", fn node, output ->
       output <> print_node(node) <> "\n"
@@ -9,6 +12,10 @@ defmodule Ovo.Printer do
 
   def print_node(%Ovo.Ast{kind: :call, value: val, nodes: children}) do
     "#{val.value}(#{Enum.map_join(children, ", ", &print_node/1)})"
+  end
+
+  def print_node(%Ovo.Ast{kind: :assignment, value: sym, nodes: expr}) do
+    "#{sym.value} = #{print_node(expr)}"
   end
 
   def print_node(%Ovo.Ast{kind: :symbol, value: val}) do
@@ -32,7 +39,7 @@ defmodule Ovo.Printer do
   end
 
   def print_node(%Ovo.Ast{kind: :string, value: val}) do
-    "\"#{val |> String.replace("\"", "\\\"")}\""
+    "`#{val |> String.replace("`", "\\`")}`"
   end
 
   def print_node(%Ovo.Ast{kind: :condition, nodes: [predicate, valid, invalid]}) do

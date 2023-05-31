@@ -1,4 +1,8 @@
 defmodule Ovo.Parser do
+  @moduledoc """
+  Parses a list of Ovo.Token.t() to generate an Ovo.Ast
+  """
+
   alias Ovo.Ast
   alias Ovo.Combinators, as: C
 
@@ -174,6 +178,13 @@ defmodule Ovo.Parser do
     C.any([&parse_single_arg_call/1, &parse_multiple_arg_call/1, &parse_argless_call/1]).(tokens)
   end
 
+  def parse_assignment(tokens) do
+    case C.all([&parse_symbol/1, C.match(:equals), &parse_expression/1]).(tokens) do
+      {:ok, [symb, expr], rest} -> {:ok, Ast.assignment(symb, expr), rest}
+      b -> b
+    end
+  end
+
   def parse_lambda(tokens) do
     case C.all([
            C.match(:backslash),
@@ -241,6 +252,7 @@ defmodule Ovo.Parser do
   def parse_expression(tokens) do
     case C.any([
            &parse_lambda/1,
+           &parse_assignment/1,
            &parse_if/1,
            &parse_call/1,
            &parse_parenthesized_expression/1,
