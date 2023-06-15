@@ -120,6 +120,9 @@ defmodule Ovo.Tokenizer do
 
   def walk(defpat("\\"), state, out, buf), do: accumulate(tail, state, out, buf, :backslash, nil)
 
+  def walk(defpat("T"), :undefined, out, buf), do: accumulate(tail, :undefined, out, buf, true)
+  def walk(defpat("F"), :undefined, out, buf), do: accumulate(tail, :undefined, out, buf, false)
+
   def walk([a | rest], state, out, buf) do
     cond do
       is_whitespace?(a) ->

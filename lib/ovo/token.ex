@@ -18,6 +18,8 @@ defmodule Ovo.Token do
   @type t_close_paren :: {:close_paren, nil}
   @type t_close_bracket :: {:close_bracket, nil}
   @type t_backslash :: {:backslash, nil}
+  @type t_true :: {true, nil}
+  @type t_false :: {false, nil}
 
   @typedoc """
   An Ovo Token.
@@ -38,4 +40,6 @@ defmodule Ovo.Token do
           | t_close_paren
           | t_close_bracket
           | t_backslash
+          | t_true
+          | t_false
 end
