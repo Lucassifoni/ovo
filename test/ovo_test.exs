@@ -253,6 +253,8 @@ defmodule OvoTest do
   test "full program" do
     program = """
     bar = 6
+    baz = T
+    foobur = `saluTations`
     age = add(access(data, `age`), bar)
 
     say_hi = \\name, age ->
@@ -273,5 +275,28 @@ defmodule OvoTest do
     """
 
     parse_print_parse(program)
+  end
+
+  test "basic evaluation" do
+    program = "addone = \\a -> add(1, a) end addone(2)"
+    assert Ovo.run(program) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+  end
+
+  test "basic evaluation 2" do
+    program = fn num ->
+      """
+      sometimes_add_things = \\a -> if equals(a, 0) then
+          add(add(1, a), 2)
+        else
+          2
+        end
+      end
+
+      sometimes_add_things(#{num})
+      """
+    end
+
+    assert Ovo.run(program.(2)) == %Ovo.Ast{kind: :integer, nodes: [], value: 2}
+    assert Ovo.run(program.(0)) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
   end
 end

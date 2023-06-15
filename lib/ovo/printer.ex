@@ -18,6 +18,8 @@ defmodule Ovo.Printer do
     "#{sym.value} = #{print_node(expr)}"
   end
 
+  def print_node(%Ovo.Ast{kind: :bool, value: s}), do: if(s, do: "T", else: "F")
+
   def print_node(%Ovo.Ast{kind: :symbol, value: val}) do
     "#{val}"
   end

@@ -38,7 +38,19 @@ defmodule Ovo do
     Code.eval_string(code, bindings)
   end
 
-  def demo() do
+  @doc ~S"""
+  Runs Ovo code through the interpreter
+
+      iex> Ovo.run("addone = \\a -> add(1, a) end addone(2)")
+      %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+  """
+  def run(code) do
+    tokens = Ovo.Tokenizer.tokenize(code)
+    {:ok, ast, _} = Ovo.Parser.parse(tokens)
+    Ovo.Interpreter.run(ast)
+  end
+
+  def demo do
     {res, _bindings} =
       run_as_elixir(
         """

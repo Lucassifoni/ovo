@@ -81,6 +81,10 @@ defmodule Ovo.Parser do
     end
   end
 
+  def parse_bool([{true, _} | rest]), do: {:ok, Ast.bool(true), rest}
+  def parse_bool([{false, _} | rest]), do: {:ok, Ast.bool(false), rest}
+  def parse_bool(tokens), do: {:error, [], tokens}
+
   @doc """
   Parses a primitive value.
 
@@ -92,7 +96,10 @@ defmodule Ovo.Parser do
       {:error, [], [{:arrow, nil}]}
   """
   def parse_value(tokens),
-    do: C.any([&parse_number/1, &parse_string/1, &parse_symbol/1, &parse_list/1]).(tokens)
+    do:
+      C.any([&parse_number/1, &parse_string/1, &parse_symbol/1, &parse_list/1, &parse_bool/1]).(
+        tokens
+      )
 
   def parse_parenthesized_expression(tokens) do
     case C.all([C.match(:open_paren), &parse_expression/1, &parse_close_paren/1]).(tokens) do

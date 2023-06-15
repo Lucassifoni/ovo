@@ -19,6 +19,8 @@ defmodule Ovo.ElixirPrinter do
     "#{val}"
   end
 
+  def print_node(%Ovo.Ast{kind: :bool, value: s}), do: if(s, do: "true", else: "false")
+
   def print_node(%Ovo.Ast{kind: :assignment, value: sym, nodes: expr}) do
     "#{sym.value} = #{print_node(expr)}"
   end
