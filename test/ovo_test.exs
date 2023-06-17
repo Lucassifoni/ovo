@@ -299,4 +299,19 @@ defmodule OvoTest do
     assert Ovo.run(program.(2)) == %Ovo.Ast{kind: :integer, nodes: [], value: 2}
     assert Ovo.run(program.(0)) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
   end
+
+  test "basic recursion" do
+    program = """
+    radd = \\a -> if equals(a, 0) then
+        radd(add(a, 1))
+      else
+        add(a, 2)
+      end
+    end
+
+    radd(0)
+    """
+
+    assert Ovo.run(program) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+  end
 end

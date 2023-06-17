@@ -2,7 +2,16 @@ defmodule Ovo.Env do
   @moduledoc """
   Default environment for Ovo.
   """
+  alias Ovo.Interpreter
   alias Ovo.Ast
+
+  use Agent
+  require Logger
+
+  def start_link(initial_value) do
+    Logger.info("Starting an environment")
+    Agent.start_link(fn -> initial_value end)
+  end
 
   defp map_nodes(nodes, env) do
     Enum.map(nodes, fn node ->
@@ -11,8 +20,10 @@ defmodule Ovo.Env do
     end)
   end
 
-  def make(bindings),
+  def make(bindings, evaluator_pid),
     do: %{
+      evaluator_pid: evaluator_pid,
+      parent: nil,
       user: bindings,
       builtins: %{
         "add" => fn nodes, env ->
@@ -49,5 +60,52 @@ defmodule Ovo.Env do
       }
     }
 
+  def fork(env) do
+    Logger.info("Forking an environment")
+    state = Agent.get(env, & &1) |> Map.put(:parent, env)
+    {:ok, fork_pid} = start_link(state)
+    Interpreter.register_pid(state.evaluator_pid, fork_pid)
+    {:ok, fork_pid}
+  end
+
   def bind_input(env, input), do: put_in(env, [:user, "data"], input)
+
+  def update_env(env, key, val) do
+    Agent.update(env, fn state ->
+      put_in(state, [:user, key], val)
+    end)
+
+    env
+  end
+
+  def find_callable(name, env) do
+    Agent.get(env, fn state ->
+      if Map.has_key?(state.user, name) do
+        {:user, Map.get(state.user, name)}
+      else
+        if Map.has_key?(state.builtins, name) do
+          {:builtins, Map.get(state.builtins, name)}
+        else
+          case state.parent do
+            nil -> :error
+            pid -> find_callable(name, pid)
+          end
+        end
+      end
+    end)
+  end
+
+  def find_value(name, env) do
+    Agent.get(env, fn state ->
+      if Map.has_key?(state.user, name) do
+        Map.get(state.user, name)
+      else
+        if Map.has_key?(state.builtins, name) do
+          Map.get(state.builtins, name)
+        else
+          :error
+        end
+      end
+    end)
+  end
 end

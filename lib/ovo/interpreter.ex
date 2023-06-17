@@ -1,16 +1,47 @@
 defmodule Ovo.Interpreter do
+  use Agent
+  require Logger
+
   @moduledoc """
   Basic Ovo Ast interpreter.
   """
   alias Ovo.Ast
   alias Ovo.Env
 
+  def start_link(initial_value) do
+    Logger.info("Starting an interpreter")
+    Agent.start_link(fn -> initial_value end)
+  end
+
+  def register_pid(pid, fork_pid) do
+    Logger.info("Registering an environment")
+    Agent.update(pid, fn pids -> [fork_pid | pids] end)
+  end
+
+  def stop_env(pid) do
+    pids = Agent.get(pid, & &1)
+
+    pids
+    |> Enum.each(fn p ->
+      Logger.info("Stopping an environment")
+      Agent.stop(p)
+    end)
+
+    Logger.info("Stopping the interpreter")
+    Agent.stop(pid)
+  end
+
   def run(ast), do: run(ast, %{}, %{})
 
   def run(%Ast{} = ast, input, bindings) do
+    {:ok, evaluator_pid} = start_link([])
     ovo_input = Ovo.Converter.elixir_to_ovo(input)
-    env = Env.make(bindings) |> Env.bind_input(ovo_input)
+    initial_state = Env.make(bindings, evaluator_pid) |> Env.bind_input(ovo_input)
+    Logger.info("Starting the root environment")
+    {:ok, env} = Env.start_link(initial_state)
+    register_pid(evaluator_pid, env)
     {_, v} = evaluate(ast, env)
+    stop_env(evaluator_pid)
     v
   end
 
@@ -18,34 +49,6 @@ defmodule Ovo.Interpreter do
     Enum.reduce(nodes, {env, nil}, fn node, {ev, _lev} ->
       evaluate(node, ev)
     end)
-  end
-
-  def update_env(env, key, val) do
-    put_in(env, [:user, key], val)
-  end
-
-  def find_callable(name, env) do
-    if Map.has_key?(env.user, name) do
-      {:user, Map.get(env.user, name)}
-    else
-      if Map.has_key?(env.builtins, name) do
-        {:builtins, Map.get(env.builtins, name)}
-      else
-        {:error, "Callable not found"}
-      end
-    end
-  end
-
-  def find_value(name, env) do
-    if Map.has_key?(env.user, name) do
-      Map.get(env.user, name)
-    else
-      if Map.has_key?(env.builtins, name) do
-        Map.get(env.builtins, name)
-      else
-        {:error, "Symbol does not resolve to a value"}
-      end
-    end
   end
 
   def evaluate(nodes, env) when is_list(nodes), do: reduce_nodes(nodes, env)
@@ -58,7 +61,7 @@ defmodule Ovo.Interpreter do
       :assignment ->
         key = ast.value
         {_, val} = evaluate(ast.nodes, env)
-        {update_env(env, key.value, val), val}
+        {Env.update_env(env, key.value, val), val}
 
       :block ->
         evaluate(ast.nodes, env)
@@ -77,7 +80,7 @@ defmodule Ovo.Interpreter do
 
       :lambda ->
         arity = length(ast.value)
-        captured_env = env
+        {:ok, captured_env} = Env.fork(env)
         program = ast.nodes
 
         {env,
@@ -90,7 +93,7 @@ defmodule Ovo.Interpreter do
              env_with_applied_args =
                Enum.reduce(symbols_and_args, captured_env, fn {sym, arg}, uenv ->
                  {_, v} = evaluate(arg, uenv)
-                 update_env(uenv, sym.value, v)
+                 Env.update_env(uenv, sym.value, v)
                end)
 
              {_, k} = evaluate(program, env_with_applied_args)
@@ -99,7 +102,7 @@ defmodule Ovo.Interpreter do
          end}
 
       :call ->
-        case find_callable(ast.value.value, env) do
+        case Env.find_callable(ast.value.value, env) do
           {:user, fun} ->
             v = fun.(ast.nodes)
             {env, v}
@@ -113,7 +116,7 @@ defmodule Ovo.Interpreter do
         end
 
       :symbol ->
-        {env, find_value(ast.value, env)}
+        {env, Env.find_value(ast.value, env)}
 
       :expr ->
         evaluate(ast.value, env)
