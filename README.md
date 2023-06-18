@@ -6,7 +6,7 @@ Ovo will be either interpreted, or compiled down to Elixir. It is a reimplementa
 
 ## Goals
 
-- [] Tokenizing, parsing, printing, for complex programs (see below)
+- [x] Tokenizing, parsing, printing, for complex programs (see below)
 - [] Visual "bubbly" editor with LiveView (this is the reason I removed infix operators)
 
 ## Current state
