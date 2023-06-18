@@ -314,4 +314,40 @@ defmodule OvoTest do
 
     assert Ovo.run(program) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
   end
+
+  test "basic recursion 2" do
+    program = """
+    b = 1
+    c = 2
+    radd = \\a -> if equals(a, 0) then
+        radd(add(a, b))
+      else
+        add(a, c)
+      end
+    end
+
+    radd(0)
+    """
+
+    assert Ovo.run(program) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+  end
+
+  test "basic recursion and nesting 3" do
+    program = """
+    c = 2
+    radd = \\a ->
+      badd = \\d ->
+        radd(add(a, d))
+      end
+      if equals(a, 0) then
+        badd(a)
+      else
+        add(a, c)
+      end
+    end
+    radd(0)
+    """
+
+    assert Ovo.run(program) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+  end
 end

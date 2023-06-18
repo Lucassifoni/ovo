@@ -62,7 +62,13 @@ defmodule Ovo.Env do
 
   def fork(env) do
     Logger.info("Forking an environment")
-    state = Agent.get(env, & &1) |> Map.put(:parent, env)
+
+    state =
+      Agent.get(env, & &1)
+      |> Map.put(:parent, env)
+      |> Map.put(:user, %{})
+      |> Map.put(:builtins, %{})
+
     {:ok, fork_pid} = start_link(state)
     Interpreter.register_pid(state.evaluator_pid, fork_pid)
     {:ok, fork_pid}
@@ -84,11 +90,17 @@ defmodule Ovo.Env do
         {:user, Map.get(state.user, name)}
       else
         if Map.has_key?(state.builtins, name) do
+          Logger.info("Found #{name}")
           {:builtins, Map.get(state.builtins, name)}
         else
           case state.parent do
-            nil -> :error
-            pid -> find_callable(name, pid)
+            nil ->
+              Logger.info("FAILED finding #{name}")
+              :error
+
+            pid ->
+              # Logger.info("Looking for #{name}, going up")
+              find_callable(name, pid)
           end
         end
       end
@@ -103,7 +115,15 @@ defmodule Ovo.Env do
         if Map.has_key?(state.builtins, name) do
           Map.get(state.builtins, name)
         else
-          :error
+          case state.parent do
+            nil ->
+              Logger.info("FAILED finding #{name}")
+              :error
+
+            pid ->
+              # Logger.info("Looking for #{name}, going up")
+              find_value(name, pid)
+          end
         end
       end
     end)
