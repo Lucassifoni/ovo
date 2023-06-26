@@ -336,15 +336,20 @@ defmodule OvoTest do
     program = """
     c = 2
     radd = \\a ->
+
       badd = \\d ->
-        radd(add(a, d))
+        nv = add(d, add(a, 1))
+        radd(nv)
       end
+
       if equals(a, 0) then
         badd(a)
       else
         add(a, c)
       end
+
     end
+
     radd(0)
     """
 

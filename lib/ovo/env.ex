@@ -84,7 +84,7 @@ defmodule Ovo.Env do
     env
   end
 
-  def find_callable(name, env) do
+  def find_callable(name, env, chain \\ []) do
     Agent.get(env, fn state ->
       if Map.has_key?(state.user, name) do
         {:user, Map.get(state.user, name)}
@@ -95,19 +95,19 @@ defmodule Ovo.Env do
         else
           case state.parent do
             nil ->
-              Logger.info("FAILED finding #{name}")
+              Logger.info("FAILED finding #{name} #{chain}")
               :error
 
             pid ->
               # Logger.info("Looking for #{name}, going up")
-              find_callable(name, pid)
+              find_callable(name, pid, [env | chain])
           end
         end
       end
     end)
   end
 
-  def find_value(name, env) do
+  def find_value(name, env, chain \\ []) do
     Agent.get(env, fn state ->
       if Map.has_key?(state.user, name) do
         Map.get(state.user, name)
@@ -117,12 +117,12 @@ defmodule Ovo.Env do
         else
           case state.parent do
             nil ->
-              Logger.info("FAILED finding #{name}")
+              Logger.info("FAILED finding #{name}, walked #{chain |> Enum.map_join(", ", &(:erlang.pid_to_list(&1)))}")
               :error
 
             pid ->
               # Logger.info("Looking for #{name}, going up")
-              find_value(name, pid)
+              find_value(name, pid, [env | chain])
           end
         end
       end

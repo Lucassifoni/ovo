@@ -16,6 +16,7 @@ defmodule Ovo.Interpreter do
   def register_pid(pid, fork_pid) do
     Logger.info("Registering an environment")
     Agent.update(pid, fn pids -> [fork_pid | pids] end)
+    :ok
   end
 
   def stop_env(pid) do
@@ -85,15 +86,16 @@ defmodule Ovo.Interpreter do
 
         {env,
          fn args ->
+
            if length(args) != arity do
              {:error, "#{length(args)} argument(s) passed instead of #{arity}"}
            else
              symbols_and_args = Enum.zip(ast.value, args)
-
              env_with_applied_args =
                Enum.reduce(symbols_and_args, captured_env, fn {sym, arg}, uenv ->
-                 {_, v} = evaluate(arg, uenv)
-                 Env.update_env(uenv, sym.value, v)
+                {_, v} = evaluate(arg, uenv)
+                Env.update_env(uenv, sym.value, v)
+                uenv
                end)
 
              {_, k} = evaluate(program, env_with_applied_args)
@@ -104,7 +106,11 @@ defmodule Ovo.Interpreter do
       :call ->
         case Env.find_callable(ast.value.value, env) do
           {:user, fun} ->
-            v = fun.(ast.nodes)
+            evaluated_args = ast.nodes |> Enum.map(fn node ->
+              {_, v} = evaluate(node, env)
+              v
+            end)
+            v = fun.(evaluated_args)
             {env, v}
 
           {:builtins, fun} ->
