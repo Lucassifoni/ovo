@@ -214,6 +214,27 @@ defmodule OvoTest do
     parse_print_parse(code)
   end
 
+  test "tokenizes bonks" do
+    code = """
+    !\\ ->
+      add(a, b)
+    end
+    """
+
+    assert Ovo.tokenize(code) == [
+             {:bonk, nil},
+             {:backslash, nil},
+             {:arrow, nil},
+             {:symbol, "add"},
+             {:open_paren, nil},
+             {:symbol, "a"},
+             {:comma, nil},
+             {:symbol, "b"},
+             {:close_paren, nil},
+             {:end, nil}
+           ]
+  end
+
   test "0-arity Lambda print loop" do
     code = """
     \\ ->
@@ -237,6 +258,16 @@ defmodule OvoTest do
   test "n-arity Lambda print loop" do
     code = """
     \\a, b ->
+      add(a, b)
+    end
+    """
+
+    parse_print_parse(code)
+  end
+
+  test "n-arity bonked Lambda print loop" do
+    code = """
+    !\\a, b ->
       add(a, b)
     end
     """
@@ -300,6 +331,28 @@ defmodule OvoTest do
     assert Ovo.run(program.(0)) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
   end
 
+  test "basic bonking evaluation 2" do
+    program = fn num ->
+      """
+      sometimes_add_things = !\\a -> if equals(a, 0) then
+          add(add(1, a), 2)
+        else
+          2
+        end
+      end
+
+      sometimes_add_things(#{num})
+      sometimes_add_things(add(#{num}, 1))
+
+      bonk(sometimes_add_things)
+      bonk(sometimes_add_things)
+      """
+    end
+
+    assert Ovo.run(program.(2)) == %Ovo.Ast{kind: :integer, nodes: [], value: 2}
+    assert Ovo.run(program.(0)) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+  end
+
   test "basic recursion" do
     program = """
     radd = \\a -> if equals(a, 0) then
@@ -335,6 +388,7 @@ defmodule OvoTest do
   test "basic recursion and nesting 3" do
     program = """
     c = 2
+
     radd = \\a ->
 
       badd = \\d ->

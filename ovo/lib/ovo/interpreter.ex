@@ -79,23 +79,42 @@ defmodule Ovo.Interpreter do
 
         {env, v}
 
+      :bonk ->
+        {_env, inner_fn} = evaluate(ast.value, env)
+        key = :crypto.strong_rand_bytes(16) |> Base.encode64() |> String.slice(0..16)
+
+        {env,
+         %{
+           callable: fn args ->
+             res = inner_fn.(args)
+
+             Agent.update(env, fn state ->
+               bonk_stack = Map.get(state.bonks, key, [])
+               put_in(state, [:bonks, key], [res | bonk_stack])
+             end)
+
+             res
+           end,
+           key: key
+         }}
+
       :lambda ->
         arity = length(ast.value)
-        {:ok, captured_env} = Env.fork(env)
         program = ast.nodes
 
         {env,
          fn args ->
-
+          {:ok, captured_env} = Env.fork(env)
            if length(args) != arity do
              {:error, "#{length(args)} argument(s) passed instead of #{arity}"}
            else
              symbols_and_args = Enum.zip(ast.value, args)
+
              env_with_applied_args =
                Enum.reduce(symbols_and_args, captured_env, fn {sym, arg}, uenv ->
-                {_, v} = evaluate(arg, uenv)
-                Env.update_env(uenv, sym.value, v)
-                uenv
+                 {_, v} = evaluate(arg, uenv)
+                 Env.update_env(uenv, sym.value, v)
+                 uenv
                end)
 
              {_, k} = evaluate(program, env_with_applied_args)
@@ -105,11 +124,25 @@ defmodule Ovo.Interpreter do
 
       :call ->
         case Env.find_callable(ast.value.value, env) do
+          {:user, %{callable: fun}} ->
+            evaluated_args =
+              ast.nodes
+              |> Enum.map(fn node ->
+                {_, v} = evaluate(node, env)
+                v
+              end)
+
+            v = fun.(evaluated_args)
+            {env, v}
+
           {:user, fun} ->
-            evaluated_args = ast.nodes |> Enum.map(fn node ->
-              {_, v} = evaluate(node, env)
-              v
-            end)
+            evaluated_args =
+              ast.nodes
+              |> Enum.map(fn node ->
+                {_, v} = evaluate(node, env)
+                v
+              end)
+
             v = fun.(evaluated_args)
             {env, v}
 

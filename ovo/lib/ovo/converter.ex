@@ -1,6 +1,6 @@
 defmodule Ovo.Converter do
   @moduledoc """
-  Converts between Ovo values (Ast nodes) and Elixir values (primitives)
+  Converts between Ovo values (Ast nodes) and Elixir values (primitives).
   """
   alias Ovo.Ast
 

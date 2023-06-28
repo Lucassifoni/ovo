@@ -1,65 +1,35 @@
 defmodule Ovo.Env do
   @moduledoc """
-  Default environment for Ovo.
+  Environment module for Ovo. Handles assigning values to an environment, forking environments, and linking them to their parent as well as to the root interpreter, who then keeps a list of child environments in the reverse order they are created.
   """
   alias Ovo.Interpreter
-  alias Ovo.Ast
 
   use Agent
   require Logger
 
+  @doc """
+  Starts an Env Agent.
+  """
   def start_link(initial_value) do
     Logger.info("Starting an environment")
     Agent.start_link(fn -> initial_value end)
   end
 
-  defp map_nodes(nodes, env) do
-    Enum.map(nodes, fn node ->
-      {_, v} = Ovo.Interpreter.evaluate(node, env)
-      v
-    end)
-  end
-
+  @doc """
+  Returns a new environment state map. The :parent field is only filled by Ovo.Env.fork/1.
+  """
   def make(bindings, evaluator_pid),
     do: %{
       evaluator_pid: evaluator_pid,
       parent: nil,
       user: bindings,
-      builtins: %{
-        "add" => fn nodes, env ->
-          case map_nodes(nodes, env) do
-            [%Ast{kind: :integer, value: v1}, %Ast{kind: :integer, value: v2}] ->
-              Ast.integer(v1 + v2)
-
-            [%Ast{kind: :float, value: v1}, %Ast{kind: :float, value: v2}] ->
-              Ast.float(v1 + v2)
-
-            [%Ast{kind: k1, value: v1}, %Ast{kind: k2, value: v2}]
-            when k1 in [:integer, :float] and k2 in [:integer, :float] ->
-              Ast.float(v1 + v2)
-
-            _ ->
-              :error
-          end
-        end,
-        "map" => fn nodes, env ->
-          case map_nodes(nodes, env) do
-            [fun, %Ast{kind: :list, nodes: items}] when is_function(fun) ->
-              Enum.map(items, fn i -> fun.([i]) end)
-
-            _ ->
-              :error
-          end
-        end,
-        "equals" => fn nodes, env ->
-          case map_nodes(nodes, env) do
-            [a, a] -> Ovo.Ast.bool(true)
-            _ -> Ovo.Ast.bool(false)
-          end
-        end
-      }
+      bonks: %{},
+      builtins: Ovo.Builtins.builtins()
     }
 
+  @doc """
+  Creates a new environment, keeping track of the parent environment.
+  """
   def fork(env) do
     Logger.info("Forking an environment")
 
@@ -67,6 +37,7 @@ defmodule Ovo.Env do
       Agent.get(env, & &1)
       |> Map.put(:parent, env)
       |> Map.put(:user, %{})
+      |> Map.put(:bonks, %{})
       |> Map.put(:builtins, %{})
 
     {:ok, fork_pid} = start_link(state)
@@ -77,6 +48,7 @@ defmodule Ovo.Env do
   def bind_input(env, input), do: put_in(env, [:user, "data"], input)
 
   def update_env(env, key, val) do
+    IO.inspect(["Putting ", env, key, val])
     Agent.update(env, fn state ->
       put_in(state, [:user, key], val)
     end)
@@ -95,7 +67,7 @@ defmodule Ovo.Env do
         else
           case state.parent do
             nil ->
-              Logger.info("FAILED finding #{name} #{chain}")
+              Logger.info("FAILED finding #{name}, walked #{chain |> Enum.map_join(", ", &(:erlang.pid_to_list(&1)))}")
               :error
 
             pid ->

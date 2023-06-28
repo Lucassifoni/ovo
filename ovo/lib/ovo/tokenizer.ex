@@ -103,6 +103,7 @@ defmodule Ovo.Tokenizer do
   def walk(defpat("`"), state, out, buf), do: accumulate(tail, state, out, buf, :string)
   def walk(defpat("->"), state, out, buf), do: accumulate(tail, state, out, buf, :arrow, nil)
   def walk(defpat("="), state, out, buf), do: accumulate(tail, state, out, buf, :equals, nil)
+  def walk(defpat("!"), state, out, buf), do: accumulate(tail, state, out, buf, :bonk, nil)
   def walk(defpat("if"), state, out, buf), do: accumulate(tail, state, out, buf, :if, nil)
   def walk(defpat("else"), state, out, buf), do: accumulate(tail, state, out, buf, :else, nil)
   def walk(defpat("then"), state, out, buf), do: accumulate(tail, state, out, buf, :then, nil)

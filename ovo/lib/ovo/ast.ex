@@ -18,7 +18,8 @@ defmodule Ovo.Ast do
             | :block
             | :condition
             | :lambda
-            | :call,
+            | :call
+            | :bonk,
           nodes: list(t()),
           value: term()
         }
@@ -30,7 +31,9 @@ defmodule Ovo.Ast do
   def root(children), do: make(:root, nil, children)
 
   def float(val), do: make(:float, val)
+
   def integer(val), do: make(:integer, val)
+
   def string(val), do: make(:string, val)
 
   def symbol(val), do: make(:symbol, val)
@@ -45,6 +48,8 @@ defmodule Ovo.Ast do
   def expr(val), do: make(:expr, val, [])
 
   def assignment(symbol, expr), do: make(:assignment, symbol, expr)
+
+  def bonk(lambda), do: make(:bonk, lambda, [])
 
   def block(nodes), do: make(:block, nil, nodes)
 
