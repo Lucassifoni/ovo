@@ -55,16 +55,13 @@ bonk(add_one) # to this day, returns :error which isn't an ovo-compatible value
 You can imagine things like :
 
 ```elixir
-add_one = !\a -> add(a, 1) end # a stack [] is created
-add_one(1) # produces the value 2, stack is [2]
-add_one(3) # produces the value 4, stack is [4, 2]
-add_some = \ ->
-   a = bonk(add_one)
-   bonk(add_one)
-   add(a, bonk(add_one))
-end
-add_one(4) @ produces the value 5, stack is [5, 4, 2]
-add_some() # adds head and head - 2, produces 7
+add_one = !\\a -> add(a, 1) end
+    add_one(1)
+    add_one(3)
+    add_one(4)
+    a = bonk(add_one)
+    bonk(add_one)
+    add(a, bonk(add_one))
 ```
 
 The usefulness of this feature can be debated but is quite limited.

@@ -48,7 +48,6 @@ defmodule Ovo.Env do
   def bind_input(env, input), do: put_in(env, [:user, "data"], input)
 
   def update_env(env, key, val) do
-    IO.inspect(["Putting ", env, key, val])
     Agent.update(env, fn state ->
       put_in(state, [:user, key], val)
     end)
