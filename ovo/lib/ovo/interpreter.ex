@@ -104,7 +104,8 @@ defmodule Ovo.Interpreter do
 
         {env,
          fn args ->
-          {:ok, captured_env} = Env.fork(env)
+           {:ok, captured_env} = Env.fork(env)
+
            if length(args) != arity do
              {:error, "#{length(args)} argument(s) passed instead of #{arity}"}
            else

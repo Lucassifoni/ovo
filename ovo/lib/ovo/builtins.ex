@@ -13,28 +13,31 @@ defmodule Ovo.Builtins do
 
   def builtins do
     %{
-      "add" => &(add(&1, &2)),
-      "map" => &(map(&1, &2)),
-      "equals" => &(equals(&1, &2)),
-      "subtract" => &(subtract(&1, &2)),
-      "multiply" => &(multiply(&1, &2)),
-      "divide" => &(divide(&1, &2)),
-      "map_access" => &(map_access(&1, &2)),
-      "map_set" => &(map_set(&1, &2)),
-      "bonk" => &(bonk(&1, &2)),
-      "greater_or_equals" => &(greater_or_equals(&1, &2))
+      "add" => &add(&1, &2),
+      "map" => &map(&1, &2),
+      "equals" => &equals(&1, &2),
+      "subtract" => &subtract(&1, &2),
+      "multiply" => &multiply(&1, &2),
+      "divide" => &divide(&1, &2),
+      "map_access" => &map_access(&1, &2),
+      "map_set" => &map_set(&1, &2),
+      "bonk" => &bonk(&1, &2),
+      "greater_or_equals" => &greater_or_equals(&1, &2)
     }
   end
 
   defp greater_or_equals(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: k1, value: v1}, %{kind: k2, value: v2}] when k1 in [:float, :integer] and k2 in [:float, :integer] ->
+      [%{kind: k1, value: v1}, %{kind: k2, value: v2}]
+      when k1 in [:float, :integer] and k2 in [:float, :integer] ->
         if v1 >= v2 do
           Ovo.Ast.bool(true)
         else
           Ovo.Ast.bool(false)
         end
-      _ -> :error
+
+      _ ->
+        :error
     end
   end
 
@@ -56,10 +59,11 @@ defmodule Ovo.Builtins do
             [h | t] -> {h, state |> put_in([:bonks, k], t)}
           end
         end)
-      _ -> :error
+
+      _ ->
+        :error
     end
   end
-
 
   defp map(nodes, env) do
     case map_nodes(nodes, env) do
@@ -148,8 +152,11 @@ defmodule Ovo.Builtins do
 
   defp map_set(nodes, env) do
     case map_nodes(nodes, env) do
-      [%Ast{kind: :map, value: v}, %Ast{kind: :string, value: v2}, %Ast{} = v3] -> Map.put(v, v2, v3)
-      _ -> :error
+      [%Ast{kind: :map, value: v}, %Ast{kind: :string, value: v2}, %Ast{} = v3] ->
+        Map.put(v, v2, v3)
+
+      _ ->
+        :error
     end
   end
 end

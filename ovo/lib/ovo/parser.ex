@@ -194,11 +194,14 @@ defmodule Ovo.Parser do
 
   def parse_bonk(tokens) do
     case C.match(:bonk).(tokens) do
-      {:ok, _, rest} -> case parse_lambda(rest) do
-        {:ok, lambda, rest} -> {:ok, Ast.bonk(lambda), rest}
-        _ -> {:error, nil, tokens}
-      end
-      b -> b
+      {:ok, _, rest} ->
+        case parse_lambda(rest) do
+          {:ok, lambda, rest} -> {:ok, Ast.bonk(lambda), rest}
+          _ -> {:error, nil, tokens}
+        end
+
+      b ->
+        b
     end
   end
 

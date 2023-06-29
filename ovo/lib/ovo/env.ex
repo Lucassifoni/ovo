@@ -66,7 +66,10 @@ defmodule Ovo.Env do
         else
           case state.parent do
             nil ->
-              Logger.info("FAILED finding #{name}, walked #{chain |> Enum.map_join(", ", &(:erlang.pid_to_list(&1)))}")
+              Logger.info(
+                "FAILED finding #{name}, walked #{chain |> Enum.map_join(", ", &:erlang.pid_to_list(&1))}"
+              )
+
               :error
 
             pid ->
@@ -88,7 +91,10 @@ defmodule Ovo.Env do
         else
           case state.parent do
             nil ->
-              Logger.info("FAILED finding #{name}, walked #{chain |> Enum.map_join(", ", &(:erlang.pid_to_list(&1)))}")
+              Logger.info(
+                "FAILED finding #{name}, walked #{chain |> Enum.map_join(", ", &:erlang.pid_to_list(&1))}"
+              )
+
               :error
 
             pid ->

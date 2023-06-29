@@ -15,6 +15,7 @@ defmodule OvoTestRecursiveBonkedSpecialCase do
 
     add(bonk(fibs), bonk(fibs))
     """
+
     assert Ovo.run(code) == %Ovo.Ast{kind: :integer, nodes: [], value: 11}
   end
 
@@ -28,6 +29,7 @@ defmodule OvoTestRecursiveBonkedSpecialCase do
     bonk(add_one)
     add(a, bonk(add_one))
     """
+
     assert Ovo.run(code) == %Ovo.Ast{kind: :integer, nodes: [], value: 7}
   end
 end
