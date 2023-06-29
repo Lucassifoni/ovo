@@ -28,7 +28,7 @@ fibs(10)
 add(bonk(fibs), bonk(fibs))
 ```
 
-Which returns `123` (the addition of fibs(10) and fibs(9)). What ?
+Which returns `123` (the addition of fibs(10), 89 and fibs(8), 34). What ?
 
 
 ### Bonk
