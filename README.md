@@ -34,7 +34,7 @@ Which returns `123` (the addition of fibs(10), 89 and fibs(8), 34). What ?
 ### Bonk
 
 The `bonk` feature in ovo works with lambdas that have been declared with a `!` before their argument list.  
-A regular lambda is  `\a -> add(a, 1) end`, whereas a bonkable lambda is `!\a -> add(a, 1)`.  
+A regular lambda is  `\a -> add(a, 1) end`, whereas a bonkable lambda is `!\a -> add(a, 1) end`.  
 A bonkable lambda pushes its results in a stack, like this :  
 
 ```elixir
