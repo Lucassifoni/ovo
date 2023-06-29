@@ -11,27 +11,61 @@ Ovo will be either interpreted, or compiled down to Elixir. It is a reimplementa
 
 ## Current state
 
-Ovo in its current state is capable of correctly parsing and printing this input :
+Ovo in its current state is capable of correctly running this input :
 
 ```elixir
-  bar = 6
-  age = add(access(data, `age`), bar)
-
-  say_hi = \\name, age ->
-    join([name, `has the age`, to_string(age)], ``)
-  end
-
-  say_hi(access(data, `name`), age)
-
-  fibs = \\a ->
-    if greater_or_equals(a, 2) then
+fibs = !\\a ->
+      if greater_or_equals(a, 2) then
         add(fibs(subtract(a, 1)), fibs(subtract(a, 2)))
-    else
+      else
         1
+      end
     end
-  end
 
-  fibs(10)
+    fibs(10)
+
+    add(bonk(fibs), bonk(fibs))
 ```
 
-It will now move to an AST interpreter, before working on compiling it to regular Elixir.
+Which returns `123` (the addition of fibs(10) and fibs(9). What ?
+
+
+### Bonk
+
+The `bonk` feature in ovo works with lambda that were declared with a `!` before their argument list. A regular lambda is  `\a -> add(a, 1) end`, whereas a bonkable lambda is `!\a -> add(a, 1)`.
+A bonkable lambda pushes its results in a stack, like this :
+
+```elixir
+add_one = !\a -> add(a, 1) end # a stack [] is created
+add_one(1) # produces the value 2, stack is [2]
+add_one(3) # produces the value 4, stack is [4, 2]
+```
+
+Calling `bonk` on a bonkable lambda pops a value from its stack.
+
+```elixir
+add_one = !\a -> add(a, 1) end # a stack [] is created
+add_one(1) # produces the value 2, stack is [2]
+add_one(3) # produces the value 4, stack is [4, 2]
+bonk(add_one) # produces the value 4, stack is [2]
+bonk(add_one) # produces the value 2, stack is []
+bonk(add_one) # to this day, returns :error which isn't an ovo-compatible value
+```
+
+You can imagine things like :
+
+```elixir
+add_one = !\a -> add(a, 1) end # a stack [] is created
+add_one(1) # produces the value 2, stack is [2]
+add_one(3) # produces the value 4, stack is [4, 2]
+add_some = \ ->
+   a = bonk(add_one)
+   bonk(add_one)
+   add(a, bonk(add_one))
+end
+add_one(4) @ produces the value 5, stack is [5, 4, 2]
+add_some() # adds head and head - 2, produces 7
+```
+
+The usefulness of this feature can be debated but is quite limited.
+
