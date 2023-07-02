@@ -32,12 +32,14 @@ defmodule Ovo.Runner do
 
   defp to_positional_args(%Ovo.Ast{kind: :list, nodes: n}), do: to_positional_args(n)
 
-  defp to_positional_args(inputs) do
+  defp to_positional_args(inputs) when is_list(inputs) do
     Enum.with_index(inputs)
     |> Enum.reduce(%{}, fn {v, i}, out ->
       Map.put(out, "arg#{i}", v)
     end)
   end
+
+  defp to_positional_args(inputs), do: to_positional_args([inputs])
 
   def run(hash, input) do
     p_inputs = input |> to_positional_args

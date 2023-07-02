@@ -13,13 +13,13 @@ defmodule OvoDistributionTest do
     code2 = """
     bar = arg(0)
     result = multiply(bar, 2)
-    [result]
+    result
     """
 
     {:ok, hash1} = Ovo.Runner.register(code1)
     {:ok, hash2} = Ovo.Runner.register(code2)
 
-    assert hash2 == "3gvBOTMda"
+    assert hash2 == "juRoIieFP"
 
     assert %Ast{kind: :integer, value: 11, nodes: []} ==
              Ovo.Registry.run_chain([hash2, hash1], [5])
@@ -27,21 +27,21 @@ defmodule OvoDistributionTest do
     assert %Ast{kind: :integer, value: 15, nodes: []} ==
              Ovo.Registry.run_chain([hash2, hash1], [7])
 
-    assert %Ast{kind: :list, nodes: [%Ast{kind: :integer, value: 14, nodes: []}]} ==
+    assert %Ast{kind: :integer, value: 14, nodes: []} ==
              Ovo.Runner.bonk(hash2)
 
-    assert %Ast{kind: :list, nodes: [%Ast{kind: :integer, value: 10, nodes: []}]} ==
+    assert %Ast{kind: :integer, value: 10, nodes: []} ==
              Ovo.Runner.bonk(hash2)
 
-    assert %Ast{kind: :list, nodes: [%Ast{kind: :integer, value: 16, nodes: []}]} ==
-             Ovo.Runner.run("3gvBOTMda", [8])
+    assert %Ast{kind: :integer, value: 16, nodes: []} ==
+             Ovo.Runner.run("juRoIieFP", [8])
   end
 
   test "program linking 2" do
     Ovo.Registry.start_link(nil)
 
     adder = """
-    [add(arg(0), arg(1))]
+    add(arg(0), arg(1))
     """
 
     add_one = """
@@ -67,20 +67,20 @@ defmodule OvoDistributionTest do
     code = """
     bar = arg(0)
     result = multiply(bar, 2)
-    [result]
+    result
     """
 
     {:ok, hash} = Ovo.Runner.register(code)
 
-    assert hash == "3gvBOTMda"
+    assert hash == "juRoIieFP"
 
     code2 = """
     z = add(arg(0), 5)
-    invoke(`3gvBOTMda`, [z])
+    invoke(`juRoIieFP`, [z])
     """
 
     {:ok, dependent_hash} = Ovo.Runner.register(code2)
 
-    assert Ovo.Runner.run(dependent_hash, [3]) |> Ovo.Converter.ovo_to_elixir() == [16]
+    assert Ovo.Runner.run(dependent_hash, [3]) |> Ovo.Converter.ovo_to_elixir() == 16
   end
 end
