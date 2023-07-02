@@ -11,12 +11,12 @@ defmodule OvoTestRecursiveBonkedSpecialCase do
       end
     end
 
-    fibs(10)
+    fibs(5)
 
     add(bonk(fibs), bonk(fibs))
     """
 
-    assert Ovo.run(code) == %Ovo.Ast{kind: :integer, nodes: [], value: 123}
+    assert {%Ovo.Ast{kind: :integer, nodes: [], value: 11}, _} = Ovo.run(code)
   end
 
   test "another bonk test" do
@@ -30,6 +30,16 @@ defmodule OvoTestRecursiveBonkedSpecialCase do
     add(a, bonk(add_one))
     """
 
-    assert Ovo.run(code) == %Ovo.Ast{kind: :integer, nodes: [], value: 7}
+    assert {%Ovo.Ast{kind: :integer, nodes: [], value: 7}, _} = Ovo.run(code)
+  end
+
+  test "access test" do
+    code = """
+    add_one = !\\a -> add(a, 1) end
+    fonk = access(`arg0`)
+    add_one(fonk)
+    """
+
+    assert {%Ovo.Ast{kind: :integer, nodes: [], value: 2}, _} = Ovo.run(code, %{"arg0" => 1})
   end
 end

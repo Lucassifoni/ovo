@@ -11,18 +11,17 @@ defmodule Ovo.Env do
   Starts an Env Agent.
   """
   def start_link(initial_value) do
-    Logger.info("Starting an environment")
     Agent.start_link(fn -> initial_value end)
   end
 
   @doc """
   Returns a new environment state map. The :parent field is only filled by Ovo.Env.fork/1.
   """
-  def make(bindings, evaluator_pid),
+  def make(evaluator_pid),
     do: %{
       evaluator_pid: evaluator_pid,
       parent: nil,
-      user: bindings,
+      user: %{},
       bonks: %{},
       builtins: Ovo.Builtins.builtins()
     }
@@ -31,8 +30,6 @@ defmodule Ovo.Env do
   Creates a new environment, keeping track of the parent environment.
   """
   def fork(env) do
-    Logger.info("Forking an environment")
-
     state =
       Agent.get(env, & &1)
       |> Map.put(:parent, env)
@@ -55,13 +52,16 @@ defmodule Ovo.Env do
     env
   end
 
+  def get_user_env(env) do
+    Agent.get(env, & &1.user)
+  end
+
   def find_callable(name, env, chain \\ []) do
     Agent.get(env, fn state ->
       if Map.has_key?(state.user, name) do
         {:user, Map.get(state.user, name)}
       else
         if Map.has_key?(state.builtins, name) do
-          Logger.info("Found #{name}")
           {:builtins, Map.get(state.builtins, name)}
         else
           case state.parent do
@@ -73,7 +73,6 @@ defmodule Ovo.Env do
               :error
 
             pid ->
-              # Logger.info("Looking for #{name}, going up")
               find_callable(name, pid, [env | chain])
           end
         end
@@ -98,7 +97,6 @@ defmodule Ovo.Env do
               :error
 
             pid ->
-              # Logger.info("Looking for #{name}, going up")
               find_value(name, pid, [env | chain])
           end
         end

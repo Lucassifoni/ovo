@@ -9,12 +9,10 @@ defmodule Ovo.Interpreter do
   alias Ovo.Env
 
   def start_link(initial_value) do
-    Logger.info("Starting an interpreter")
     Agent.start_link(fn -> initial_value end)
   end
 
   def register_pid(pid, fork_pid) do
-    Logger.info("Registering an environment")
     Agent.update(pid, fn pids -> [fork_pid | pids] end)
     :ok
   end
@@ -24,26 +22,31 @@ defmodule Ovo.Interpreter do
 
     pids
     |> Enum.each(fn p ->
-      Logger.info("Stopping an environment")
       Agent.stop(p)
     end)
 
-    Logger.info("Stopping the interpreter")
     Agent.stop(pid)
   end
 
-  def run(ast), do: run(ast, %{}, %{})
+  def run(ast), do: run(ast, %{})
 
-  def run(%Ast{} = ast, input, bindings) do
+  def run(%Ast{} = ast, input) do
     {:ok, evaluator_pid} = start_link([])
+
     ovo_input = Ovo.Converter.elixir_to_ovo(input)
-    initial_state = Env.make(bindings, evaluator_pid) |> Env.bind_input(ovo_input)
-    Logger.info("Starting the root environment")
+
+    initial_state = Env.make(evaluator_pid) |> Env.bind_input(ovo_input)
+
     {:ok, env} = Env.start_link(initial_state)
+
     register_pid(evaluator_pid, env)
-    {_, v} = evaluate(ast, env)
+
+    {env, v} = evaluate(ast, env)
+
+    user_env = Env.get_user_env(env)
     stop_env(evaluator_pid)
-    v
+
+    {v, user_env}
   end
 
   def reduce_nodes(nodes, env) do
@@ -160,6 +163,18 @@ defmodule Ovo.Interpreter do
 
       :expr ->
         evaluate(ast.value, env)
+
+      :list ->
+        {env,
+         %Ast{
+           kind: :list,
+           value: nil,
+           nodes:
+             Enum.map(ast.nodes, fn n ->
+               {_, r} = evaluate(n, env)
+               r
+             end)
+         }}
 
       _ ->
         {env, ast}

@@ -15,7 +15,10 @@ defmodule Ovo.Builtins do
     %{
       "add" => &add(&1, &2),
       "map" => &map(&1, &2),
+      "access" => &access(&1, &2),
+      "arg" => &arg(&1, &2),
       "equals" => &equals(&1, &2),
+      "invoke" => &invoke(&1, &2),
       "subtract" => &subtract(&1, &2),
       "multiply" => &multiply(&1, &2),
       "divide" => &divide(&1, &2),
@@ -24,6 +27,38 @@ defmodule Ovo.Builtins do
       "bonk" => &bonk(&1, &2),
       "greater_or_equals" => &greater_or_equals(&1, &2)
     }
+  end
+
+  defp invoke(nodes, env) do
+    case map_nodes(nodes, env) do
+      [%{kind: :string, value: hash}, %{kind: :list, nodes: ns}] ->
+        Ovo.Registry.run_chain([hash], ns)
+
+      _ ->
+        :error
+    end
+  end
+
+  defp arg(nodes, env) do
+    case map_nodes(nodes, env) do
+      [%{kind: :integer, value: v}] ->
+        data = Ovo.Env.find_value("data", env)
+        Map.get(data.value, "arg#{v}")
+
+      _ ->
+        :error
+    end
+  end
+
+  defp access(nodes, env) do
+    case map_nodes(nodes, env) do
+      [%{kind: :string, value: v}] = n ->
+        data = Ovo.Env.find_value("data", env)
+        Map.get(data.value, v)
+
+      b ->
+        :error
+    end
   end
 
   defp greater_or_equals(nodes, env) do

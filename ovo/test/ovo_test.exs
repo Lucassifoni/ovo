@@ -310,7 +310,7 @@ defmodule OvoTest do
 
   test "basic evaluation" do
     program = "addone = \\a -> add(1, a) end addone(2)"
-    assert Ovo.run(program) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program)
   end
 
   test "basic evaluation 2" do
@@ -327,8 +327,8 @@ defmodule OvoTest do
       """
     end
 
-    assert Ovo.run(program.(2)) == %Ovo.Ast{kind: :integer, nodes: [], value: 2}
-    assert Ovo.run(program.(0)) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+    {%Ovo.Ast{kind: :integer, nodes: [], value: 2}, _} = Ovo.run(program.(2))
+    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program.(0))
   end
 
   test "basic bonking evaluation 2" do
@@ -349,8 +349,8 @@ defmodule OvoTest do
       """
     end
 
-    assert Ovo.run(program.(2)) == %Ovo.Ast{kind: :integer, nodes: [], value: 2}
-    assert Ovo.run(program.(0)) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+    {%Ovo.Ast{kind: :integer, nodes: [], value: 2}, _} = Ovo.run(program.(2))
+    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program.(0))
   end
 
   test "basic recursion" do
@@ -365,7 +365,7 @@ defmodule OvoTest do
     radd(0)
     """
 
-    assert Ovo.run(program) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program)
   end
 
   test "basic recursion 2" do
@@ -382,7 +382,7 @@ defmodule OvoTest do
     radd(0)
     """
 
-    assert Ovo.run(program) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program)
   end
 
   test "basic recursion and nesting 3" do
@@ -407,6 +407,6 @@ defmodule OvoTest do
     radd(0)
     """
 
-    assert Ovo.run(program) == %Ovo.Ast{kind: :integer, nodes: [], value: 3}
+    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program)
   end
 end
