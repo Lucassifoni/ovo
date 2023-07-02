@@ -5,6 +5,8 @@ defmodule Ovo.Registry do
   """
   use Agent
 
+  def start, do: start_link(nil)
+
   def start_link(_) do
     Agent.start_link(
       fn ->
@@ -16,14 +18,14 @@ defmodule Ovo.Registry do
 
   def run_chain(hashes, inputs) do
     Enum.reduce(hashes, inputs, fn hash, values ->
-      {:ok, pid} = find_runner(hash)
+      {:ok, _pid} = find_runner(hash)
       Ovo.Runner.run(hash, values)
     end)
   end
 
   def find_runner(hash) do
     case Agent.get(__MODULE__, &(&1 |> Map.get(hash))) do
-      %{runner: pid, stack: stack} -> {:ok, pid}
+      %{runner: pid, stack: _stack} -> {:ok, pid}
       _ -> {:error, nil}
     end
   end
@@ -47,8 +49,8 @@ defmodule Ovo.Registry do
 
   def pop_result(hash) do
     Agent.get_and_update(__MODULE__, fn state ->
-      {%{runner: pid, stack: [h | t]}, nv} =
-        Map.get_and_update(state, hash, fn %{runner: pid, stack: [h | t], last_env: le} = m ->
+      {%{runner: _pid, stack: [h | _t]}, nv} =
+        Map.get_and_update(state, hash, fn %{runner: pid, stack: [_h | t], last_env: le} = m ->
           {m, %{runner: pid, stack: t, last_env: le}}
         end)
 

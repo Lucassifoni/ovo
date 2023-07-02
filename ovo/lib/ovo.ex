@@ -31,38 +31,11 @@ defmodule Ovo do
 
   def parse(tokens), do: Ovo.Parser.parse(tokens)
 
-  def run_as_elixir(input, bindings \\ []) do
-    tokens = Ovo.Tokenizer.tokenize(input)
-    {:ok, ast, _} = Ovo.Parser.parse(tokens)
-    code = Ovo.ElixirPrinter.print(ast)
-    Code.eval_string(code, bindings)
-  end
-
   @doc ~S"""
   Runs Ovo code through the interpreter
 
       iex> {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run("addone = \\a -> add(1, a) end addone(2)")
 
   """
-  def run(code, input \\ %{}) do
-    tokens = Ovo.Tokenizer.tokenize(code)
-    {:ok, ast, _} = Ovo.Parser.parse(tokens)
-    Ovo.Interpreter.run(ast, input)
-  end
-
-  def demo do
-    {res, _bindings} =
-      run_as_elixir(
-        """
-          if (foo) then
-            ([5])
-          else
-            ([4, [5, 4, []], [[[]]], 6])
-          end
-        """,
-        foo: false
-      )
-
-    res
-  end
+  def run(code, input \\ %{}), do: Ovo.Interpreter.run(code, input)
 end

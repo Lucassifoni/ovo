@@ -30,6 +30,12 @@ defmodule Ovo.Interpreter do
 
   def run(ast), do: run(ast, %{})
 
+  def run(code, input) when is_binary(code) do
+    tokens = Ovo.Tokenizer.tokenize(code)
+    {:ok, ast, _} = Ovo.Parser.parse(tokens)
+    run(ast, input)
+  end
+
   def run(%Ast{} = ast, input) do
     {:ok, evaluator_pid} = start_link([])
 

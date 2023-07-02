@@ -83,4 +83,33 @@ defmodule OvoDistributionTest do
 
     assert Ovo.Runner.run(dependent_hash, [3]) |> Ovo.Converter.ovo_to_elixir() == 16
   end
+
+  test "program linking 4" do
+    # Start an Ovo.Registry
+    Ovo.Registry.start()
+
+    # Start some Ovo.Runners
+
+    {:ok, ovo_adder} =
+      Ovo.Runner.register("""
+      add(arg(0), arg(1))
+      """)
+
+    {:ok, ovo_times2} =
+      Ovo.Runner.register("""
+      multiply(arg(0), 2)
+      """)
+
+    %Ovo.Ast{value: 5} = Ovo.Runner.run(ovo_adder, [2, 3])
+    %Ovo.Ast{value: 10} = Ovo.Runner.run(ovo_times2, [5])
+    %Ovo.Ast{value: 10} = Ovo.Registry.run_chain([ovo_adder, ovo_times2], [2, 3])
+
+    {:ok, dependent_program} =
+      Ovo.Runner.register("""
+        invoke(`0ceaimhlh`, [2])
+      """)
+
+    %Ovo.Ast{value: 4} = Ovo.Runner.run(dependent_program, [])
+    %Ovo.Ast{value: 4} = Ovo.Runner.bonk(dependent_program)
+  end
 end

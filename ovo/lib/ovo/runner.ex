@@ -19,13 +19,13 @@ defmodule Ovo.Runner do
     Logger.info("Registered program at hash #{hash}")
 
     case Ovo.Registry.find_runner(hash) do
-      {:ok, pid} ->
+      {:ok, _pid} ->
         {:ok, hash}
 
       {:error, _} ->
         case Ovo.Runner.instantiate(ast, hash) do
-          {:error, reason} = e -> e
-          {:ok, pid} -> {:ok, hash}
+          {:error, _reason} = e -> e
+          {:ok, _pid} -> {:ok, hash}
         end
     end
   end
