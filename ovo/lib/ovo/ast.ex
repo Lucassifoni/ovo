@@ -3,28 +3,31 @@ defmodule Ovo.Ast do
   Defines an AST node for Ovo.
   """
 
-  @type t :: %{
-          kind:
-            :root
-            | :float
-            | :integer
-            | :string
-            | :symbol
-            | :bool
-            | :map
-            | :list
-            | :expr
-            | :assignment
-            | :block
-            | :condition
-            | :lambda
-            | :call
-            | :bonk,
+  @type kind ::
+          :root
+          | :float
+          | :integer
+          | :string
+          | :symbol
+          | :bool
+          | :map
+          | :list
+          | :expr
+          | :assignment
+          | :block
+          | :condition
+          | :lambda
+          | :call
+          | :bonk
+
+  @type t :: %__MODULE__{
+          kind: kind(),
           nodes: list(t()),
           value: term()
         }
   defstruct [:kind, :nodes, :value]
 
+  @spec make(kind(), term(), list(t())) :: t()
   def make(kind \\ :root, value \\ nil, children \\ []),
     do: %__MODULE__{kind: kind, nodes: children, value: value}
 

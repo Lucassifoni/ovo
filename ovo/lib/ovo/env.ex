@@ -1,4 +1,19 @@
 defmodule Ovo.Env do
+  @type t :: %__MODULE__{
+          evaluator_pid: pid(),
+          parent: pid() | nil,
+          user: map(),
+          bonks: map(),
+          builtins: map()
+        }
+  defstruct [
+    :evaluator_pid,
+    :parent,
+    :user,
+    :bonks,
+    :builtins
+  ]
+
   @moduledoc """
   Environment module for Ovo. Handles assigning values to an environment, forking environments, and linking them to their parent as well as to the root interpreter, who then keeps a list of child environments in the reverse order they are created.
   """
@@ -10,6 +25,7 @@ defmodule Ovo.Env do
   @doc """
   Starts an Env Agent.
   """
+  @spec start_link(t()) :: Agent.on_start()
   def start_link(initial_value) do
     Agent.start_link(fn -> initial_value end)
   end
@@ -17,6 +33,7 @@ defmodule Ovo.Env do
   @doc """
   Returns a new environment state map. The :parent field is only filled by Ovo.Env.fork/1.
   """
+  @spec make(pid())::t()
   def make(evaluator_pid),
     do: %{
       evaluator_pid: evaluator_pid,
@@ -29,6 +46,7 @@ defmodule Ovo.Env do
   @doc """
   Creates a new environment, keeping track of the parent environment.
   """
+  @spec fork(pid()) :: {:ok, pid()}
   def fork(env) do
     state =
       Agent.get(env, & &1)
@@ -42,8 +60,10 @@ defmodule Ovo.Env do
     {:ok, fork_pid}
   end
 
+  @spec bind_input(pid(), map()) :: map()
   def bind_input(env, input), do: put_in(env, [:user, "data"], input)
 
+  @spec update_env(pid(), binary(), term()) :: pid()
   def update_env(env, key, val) do
     Agent.update(env, fn state ->
       put_in(state, [:user, key], val)
@@ -52,10 +72,12 @@ defmodule Ovo.Env do
     env
   end
 
+  @spec get_user_env(pid()) :: map()
   def get_user_env(env) do
     Agent.get(env, & &1.user)
   end
 
+  @spec find_callable(binary(), pid(), list(pid())) :: :error | fun()
   def find_callable(name, env, chain \\ []) do
     Agent.get(env, fn state ->
       if Map.has_key?(state.user, name) do
@@ -80,6 +102,7 @@ defmodule Ovo.Env do
     end)
   end
 
+  @spec find_callable(binary(), pid(), list(pid())) :: :error | Ovo.Ast.t()
   def find_value(name, env, chain \\ []) do
     Agent.get(env, fn state ->
       if Map.has_key?(state.user, name) do

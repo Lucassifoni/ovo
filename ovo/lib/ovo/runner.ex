@@ -1,4 +1,9 @@
 defmodule Ovo.Runner do
+
+  @type t() :: %{ast: Ovo.Ast.t(), code: binary(), hash: binary()}
+  
+  defstruct ast: nil, code: nil, hash: nil
+
   @moduledoc """
   An ovo Runner holds on an AST and is managed by an Ovo.Registry, holding on a stack of previous results.
   A runner is publicly identified by its hash and internally by its pid.
@@ -11,6 +16,7 @@ defmodule Ovo.Runner do
     Agent.start_link(fn -> initial_value end)
   end
 
+  @spec register(binary()) :: {:ok, binary()} | {:error, any()}
   def register(code) do
     tokens = Ovo.Tokenizer.tokenize(code)
     {:ok, ast, _} = Ovo.Parser.parse(tokens)
@@ -23,7 +29,7 @@ defmodule Ovo.Runner do
         {:ok, hash}
 
       {:error, _} ->
-        case Ovo.Runner.instantiate(ast, hash) do
+        case Ovo.Runner.instantiate(ast, code, hash) do
           {:error, _reason} = e -> e
           {:ok, _pid} -> {:ok, hash}
         end
@@ -41,6 +47,7 @@ defmodule Ovo.Runner do
 
   defp to_positional_args(inputs), do: to_positional_args([inputs])
 
+  @spec run(binary(), list() | Ovo.Ast.t()) :: Ovo.Ast.t()
   def run(hash, input) do
     p_inputs = input |> to_positional_args
     {:ok, pid} = Ovo.Registry.find_runner(hash)
@@ -50,12 +57,14 @@ defmodule Ovo.Runner do
     output
   end
 
+  @spec bonk(binary()) :: Ovo.Ast.t()
   def bonk(hash) do
     Ovo.Registry.pop_result(hash)
   end
 
-  def instantiate(ast, hash) do
-    {:ok, pid} = start_link(%{ast: ast, hash: hash})
+  @spec instantiate(Ovo.Ast.t(), binary(), binary()) :: {:ok, pid()}
+  def instantiate(ast, code, hash) do
+    {:ok, pid} = start_link(%__MODULE__{ast: ast, code: code, hash: hash})
     Ovo.Registry.register_runner(pid, hash)
     {:ok, pid}
   end
