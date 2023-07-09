@@ -1,0 +1,73 @@
+<div class="arena">
+    <div class="code bg-slate-300 p-4">
+        <textarea phx-keyup="code_change">
+            <%= @code %>
+        </textarea>
+        <button class="bg-slate-700 text-slate-100 px-4 py-2 mt-2 rounded hover:bg-slate-500 transition-colors"
+            phx-click="evaluate">Évaluer</button>
+    </div>
+    <div class="viewer bg-slate-500 p-4">
+        <%= case @ast do %>
+            <% {:ok, parsed, []} -> %>
+                <Node.show node={parsed} depth={0} path={[]} />
+            <% _ -> %> Erreur au parsing.
+        <% end %>
+    </div>
+    <div class="result bg-slate-200 w-full min-h-[24px] p-4">
+        <%= case @result do %>
+            <% nil -> %> Commencez par évaluer
+            <% :error -> %> Quelque chose a foiré
+            <% a -> %> <Node.show node={a} depth={0} path={[]}/>
+        <% end %>
+    </div>
+</div>
+
+<style>
+    .arena {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .code {
+        flex: 0 0 50%;
+    }
+    .code textarea {
+        width: 100%;
+        min-height: 30em;
+    }
+    .viewer {
+        flex: 0 0 50%;
+    }
+    .ast-node {
+        border: 1px solid #ddd;
+        display: inline-block;
+        background: #eee;
+        position: relative;
+        min-height: 32px;
+        min-width: 80px;
+        padding: 6px;
+        margin: 4px;
+    }
+
+    .ast-node-expr,
+    .ast-node-block {
+        padding: 0;
+        border: none;
+    }
+
+    .ast-node-root>.ast-node-expr {
+        display: block;
+    }
+
+    .ast-node-block {
+        display: block;
+    }
+
+    .ast-label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        font-size: 8px;
+    }
+</style>
