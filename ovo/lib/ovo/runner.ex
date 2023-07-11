@@ -1,7 +1,6 @@
 defmodule Ovo.Runner do
-
   @type t() :: %{ast: Ovo.Ast.t(), code: binary(), hash: binary()}
-  
+
   defstruct ast: nil, code: nil, hash: nil
 
   @moduledoc """
@@ -65,7 +64,7 @@ defmodule Ovo.Runner do
   @spec instantiate(Ovo.Ast.t(), binary(), binary()) :: {:ok, pid()}
   def instantiate(ast, code, hash) do
     {:ok, pid} = start_link(%__MODULE__{ast: ast, code: code, hash: hash})
-    Ovo.Registry.register_runner(pid, hash)
+    Ovo.Registry.register_runner(pid, hash, %{code: code})
     {:ok, pid}
   end
 end

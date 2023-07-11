@@ -13,11 +13,60 @@ defmodule OvoPlaygroundWeb.PageLive do
 
   def mount(_params, _, socket) do
     parsed = Ovo.tokenize(@code) |> Ovo.parse()
-    {:ok, assign(socket, code: @code, ast: parsed, result: nil)}
+
+    {:ok,
+     assign(socket,
+       code: @code,
+       ast: parsed,
+       result: nil,
+       runners: Ovo.Registry.runners(),
+       state: :create_runner
+     )}
+  end
+
+  def update_runners(socket) do
+    socket |> assign(runners: Ovo.Registry.runners())
+  end
+
+  def transition_to(socket, state) do
+    socket |> assign(state: state)
   end
 
   def handle_event("code_change", %{"value" => value}, socket) do
     {:noreply, assign(socket, code: value, ast: Ovo.tokenize(value) |> Ovo.parse(), result: nil)}
+  end
+
+  def handle_event("cancel", _, socket) do
+    {:noreply, socket |> transition_to(:idle)}
+  end
+
+  def handle_event("run_runner", %{"hash" => hash}, socket) do
+    Ovo.Runner.run(hash, [])
+    {:noreply, socket |> update_runners}
+  end
+
+  def handle_event("bonk_runner", %{"hash" => hash}, socket) do
+    Ovo.Runner.bonk(hash)
+    {:noreply, socket |> update_runners}
+  end
+
+  def handle_event("create_runner", _, socket) do
+    {:noreply, socket |> transition_to(:create_runner)}
+  end
+
+  def handle_event("register", _, socket) do
+    code = socket.assigns[:code]
+
+    case Ovo.Runner.register(code) do
+      {:ok, hash} ->
+        {:noreply,
+         socket
+         |> transition_to(:idle)
+         |> update_runners()}
+
+      _ ->
+        {:noreply, socket}
+    end
   end
 
   defp string_to_path(str) do

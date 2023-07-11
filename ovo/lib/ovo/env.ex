@@ -33,7 +33,7 @@ defmodule Ovo.Env do
   @doc """
   Returns a new environment state map. The :parent field is only filled by Ovo.Env.fork/1.
   """
-  @spec make(pid())::t()
+  @spec make(pid()) :: t()
   def make(evaluator_pid),
     do: %{
       evaluator_pid: evaluator_pid,

@@ -1,4 +1,6 @@
 defmodule Ovo.Registry do
+  require Logger
+
   @moduledoc """
   The Ovo.Registry holds information about multiple Ovo.Runner, keeping track of their Hash <-> Pid mapping, and of previous results in a stack.
   In a similar way that bonkable lambdas keep track of their previous results in a single interpreter run, Runners are globally bonkable and can pop back their previous execution results.
@@ -8,11 +10,28 @@ defmodule Ovo.Registry do
   def start, do: start_link(nil)
 
   def start_link(_) do
+    Logger.info("Starting Ovo.Registry")
+
     Agent.start_link(
       fn ->
         %{}
       end,
       name: __MODULE__
+    )
+  end
+
+  defp view_runner(hash, %{metadata: metadata, stack: stack}) do
+    %{
+      stack: stack,
+      metadata: metadata,
+      hash: hash
+    }
+  end
+
+  def runners do
+    Agent.get(
+      __MODULE__,
+      &(Enum.map(&1, fn {k, v} -> {k, view_runner(k, v)} end) |> Enum.into(%{}))
     )
   end
 
@@ -30,17 +49,22 @@ defmodule Ovo.Registry do
     end
   end
 
-  def register_runner(pid, hash) do
+  def register_runner(pid, hash, metadata \\ %{}) do
     Agent.update(__MODULE__, fn state ->
-      state |> Map.put(hash, %{runner: pid, stack: [], last_env: %{}})
+      state |> Map.put(hash, %{runner: pid, stack: [], last_env: %{}, metadata: metadata})
     end)
   end
 
   def push_result(hash, result, last_env) do
     Agent.update(__MODULE__, fn state ->
       {_, nv} =
-        Map.get_and_update(state, hash, fn %{runner: pid, stack: stack, last_env: _} = a ->
-          {a, %{runner: pid, stack: [result | stack], last_env: last_env}}
+        Map.get_and_update(state, hash, fn %{
+                                             runner: pid,
+                                             stack: stack,
+                                             last_env: _,
+                                             metadata: metadata
+                                           } = a ->
+          {a, %{runner: pid, stack: [result | stack], last_env: last_env, metadata: metadata}}
         end)
 
       nv
@@ -50,8 +74,13 @@ defmodule Ovo.Registry do
   def pop_result(hash) do
     Agent.get_and_update(__MODULE__, fn state ->
       {%{runner: _pid, stack: [h | _t]}, nv} =
-        Map.get_and_update(state, hash, fn %{runner: pid, stack: [_h | t], last_env: le} = m ->
-          {m, %{runner: pid, stack: t, last_env: le}}
+        Map.get_and_update(state, hash, fn %{
+                                             runner: pid,
+                                             stack: [_h | t],
+                                             last_env: le,
+                                             metadata: metadata
+                                           } = m ->
+          {m, %{runner: pid, stack: t, last_env: le, metadata: metadata}}
         end)
 
       {h, nv}

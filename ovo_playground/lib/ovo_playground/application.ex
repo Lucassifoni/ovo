@@ -13,7 +13,8 @@ defmodule OvoPlayground.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: OvoPlayground.PubSub},
       # Start the Endpoint (http/https)
-      OvoPlaygroundWeb.Endpoint
+      OvoPlaygroundWeb.Endpoint,
+      {Ovo.Registry, nil}
       # Start a worker by calling: OvoPlayground.Worker.start_link(arg)
       # {OvoPlayground.Worker, arg}
     ]

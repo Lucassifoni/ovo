@@ -9,7 +9,7 @@ import Config
 config :ovo_playground, OvoPlaygroundWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}, port: System.get_env("PORT", "4141") |> String.to_integer],
+  http: [ip: {127, 0, 0, 1}, port: System.get_env("PORT", "4141") |> String.to_integer()],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,

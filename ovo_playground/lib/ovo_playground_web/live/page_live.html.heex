@@ -1,73 +1,153 @@
-<div class="arena">
-    <div class="code bg-slate-300 p-4">
+<%= case @state do %>
+  <% :idle -> %>
+    <div class="bg-slate-300 p-4">
+      <h3>Your runners :</h3>
+      <div class="flex flex-wrap">
+        <%= for {hash, runner} <- @runners do %>
+          <div class="bg-slate-200 p-2 m-4 min-w-[240px]">
+            <h4 class="mb-2 text-lg font-bold">
+              <%= hash %>
+            </h4>
+            <pre class="text-xs font-mono bg-slate-700 text-white p-4 mb-2"><code><%= String.trim(runner.metadata.code) %></code></pre>
+            <h4 class="mb-2">last results</h4>
+            <div class="max-w-[260px]">
+              <%= for r <- runner.stack |> Enum.reverse do %>
+                <Node.show_node node={r} depth={0} path={[]} />
+              <% end %>
+            </div>
+            <hr />
+            <button
+              class="bg-slate-700 text-slate-100 px-4 py-2 mt-2 rounded hover:bg-slate-500 transition-colors"
+              phx-click="run_runner"
+              phx-value-hash={hash}
+            >
+              Run
+            </button>
+
+            <button
+              class="bg-slate-700 text-slate-100 px-4 py-2 mt-2 rounded hover:bg-slate-500 transition-colors"
+              phx-click="bonk_runner"
+              phx-value-hash={hash}
+            >
+              Bonk
+            </button>
+          </div>
+        <% end %>
+      </div>
+      <button
+        class="bg-slate-700 text-slate-100 px-4 py-2 mt-2 rounded hover:bg-slate-500 transition-colors"
+        phx-click="create_runner"
+      >
+        Create a new runner
+      </button>
+    </div>
+  <% :create_runner -> %>
+    <div class="arena">
+      <div class="code bg-slate-300 p-4">
         <textarea phx-keyup="code_change">
-            <%= @code %>
-        </textarea>
-        <button class="bg-slate-700 text-slate-100 px-4 py-2 mt-2 rounded hover:bg-slate-500 transition-colors"
-            phx-click="evaluate">Évaluer</button>
-    </div>
-    <div class="viewer bg-slate-500 p-4">
-        <%= case @ast do %>
-            <% {:ok, parsed, []} -> %>
-                <Node.show node={parsed} depth={0} path={[]} />
-            <% _ -> %> Erreur au parsing.
-        <% end %>
-    </div>
-    <div class="result bg-slate-200 w-full min-h-[24px] p-4">
+                    <%= @code %>
+                </textarea>
+        <button
+          class="bg-slate-700 text-slate-100 px-4 py-2 mt-2 rounded hover:bg-slate-500 transition-colors"
+          phx-click="cancel"
+        >
+          Retour
+        </button>
+        <button
+          class="bg-slate-700 text-slate-100 px-4 py-2 mt-2 rounded hover:bg-slate-500 transition-colors"
+          phx-click="evaluate"
+        >
+          Évaluer
+        </button>
         <%= case @result do %>
-            <% nil -> %> Commencez par évaluer
-            <% :error -> %> Quelque chose a foiré
-            <% a -> %> <Node.show node={a} depth={0} path={[]}/>
+          <% nil -> %>
+          <% :error -> %>
+          <% a -> %>
+            <button
+              class="bg-slate-700 text-slate-100 px-4 py-2 mt-2 rounded hover:bg-slate-500 transition-colors"
+              phx-click="register"
+            >
+              Enregistrer ce runner
+            </button>
         <% end %>
+      </div>
+      <div class="viewer bg-slate-500 p-4">
+        <%= case @ast do %>
+          <% {:ok, parsed, []} -> %>
+            <Node.show_node node={parsed} depth={0} path={[]} />
+          <% _ -> %>
+            Erreur au parsing.
+        <% end %>
+      </div>
+      <div class="result bg-slate-200 w-full min-h-[24px] p-4">
+        <%= case @result do %>
+          <% nil -> %>
+            Commencez par évaluer
+          <% :error -> %>
+            Quelque chose a foiré
+          <% a -> %>
+            <Node.show_node node={a} depth={0} path={[]} />
+        <% end %>
+      </div>
     </div>
-</div>
+<% end %>
 
 <style>
-    .arena {
-        width: 100%;
-        height: 100vh;
-        display: flex;
-        flex-wrap: wrap;
-    }
-    .code {
-        flex: 0 0 50%;
-    }
-    .code textarea {
-        width: 100%;
-        min-height: 30em;
-    }
-    .viewer {
-        flex: 0 0 50%;
-    }
-    .ast-node {
-        border: 1px solid #ddd;
-        display: inline-block;
-        background: #eee;
-        position: relative;
-        min-height: 32px;
-        min-width: 80px;
-        padding: 6px;
-        margin: 4px;
-    }
+  .arena {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-wrap: wrap;
+  }
 
-    .ast-node-expr,
-    .ast-node-block {
-        padding: 0;
-        border: none;
-    }
+  .code {
+      flex: 0 0 50%;
+  }
 
-    .ast-node-root>.ast-node-expr {
-        display: block;
-    }
+  .code textarea {
+      width: 100%;
+      min-height: 30em;
+  }
 
-    .ast-node-block {
-        display: block;
-    }
+  .viewer {
+      flex: 0 0 50%;
+  }
 
-    .ast-label {
-        position: absolute;
-        top: 0;
-        left: 0;
-        font-size: 8px;
-    }
+  .ast-node {
+      display: inline-block;
+      background: #eee;
+      position: relative;
+      min-height: 32px;
+      min-width: 80px;
+      padding: 2px 6px;
+      margin-bottom: 4px;
+  }
+
+  .ast-node-lambda {
+      padding-top: 16px;
+  }
+
+  .ast-node-expr,
+  .ast-node-block {
+      padding: 0;
+      border: none;
+  }
+
+  .ast-node-root>.ast-node-expr {
+      display: block;
+  }
+
+  .ast-node-block {
+      display: block;
+  }
+
+  .ast-label {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      font-size: 8px;
+      background: wheat;
+      border-radius: 3px;
+      padding: 2px 4px;
+  }
 </style>
