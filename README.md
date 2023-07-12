@@ -8,8 +8,15 @@ It is a reimplementation from scratch of a previous (private) implementation in 
 ## Goals
 
 - [x] Tokenizing, parsing, printing, running programs
-- [ ] Visual "bubbly" editor with LiveView (in progress)
+- [x] Visual editor with LiveView .. well.. sort of
 
+## The playground
+
+Ovo can be used in a playground, which is a Liveview app allowing for visual edition of Ovo programs, runner registration, chains of runners, manual stacks bonking, and orchestration of the execution of Ovo programs.
+
+![](screenshot.png)
+
+Complex programs are made possible due to Ovo's capabilities (detailed below), forming the Ovo Optimal Personal System (oops).
 
 ## Current state
 
@@ -111,7 +118,7 @@ Ovo.Runner.run(dependent_program, []) # %Ovo.Ast{value: 4}
 
 What's nice here is that noone can pull the rug from beneath you : since program hashes are deterministic from the serialized AST, a program cannot change its behavior without changing its hash (well, except for collisions).
 
-*Of course*, you can also `bonk` runners to get their previous execution result, which is popped from a stack. You are *of course* responsible for not bonking a runner with an empty stack. Bonking a runner from its hash from within another ovo program is *of course* in the works.
+*Of course*, you can also `bonk` runners to get their previous execution result, which is popped from a stack. You are *of course* responsible for not bonking a runner with an empty stack. Bonking a runner from its hash from within another ovo program is possible with `rbonk/1`.
 
 ```elixir
 Ovo.Runner.bonk(dependent_program) #  %Ovo.Ast{value: 4}
