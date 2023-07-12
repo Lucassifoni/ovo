@@ -102,7 +102,11 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
   def string(assigns) do
     ~H"""
     <.node_label name="Chaîne" />
-    <input type="text" value={@node.value} phx-keyup={"change_path:#{path_to_string(@path)}"} />
+    <%= if String.length(@node.value) > 50 do %>
+      <textarea style="min-height: 100px"><%= @node.value %></textarea>
+    <% else %>
+      <input type="text" value={@node.value} phx-keyup={"change_path:#{path_to_string(@path)}"} />
+    <% end %>
     """
   end
 

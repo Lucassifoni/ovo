@@ -15,18 +15,43 @@ defmodule Ovo.Builtins do
     %{
       "add" => &add(&1, &2),
       "map" => &map(&1, &2),
+      "reduce" => &reduce(&1, &2),
       "access" => &access(&1, &2),
+      "concat" => &concat(&1, &2),
       "arg" => &arg(&1, &2),
       "equals" => &equals(&1, &2),
       "invoke" => &invoke(&1, &2),
+      "to_string" => &to_string(&1, &2),
+      "errored" => &errored(&1, &2),
       "subtract" => &subtract(&1, &2),
       "multiply" => &multiply(&1, &2),
       "divide" => &divide(&1, &2),
       "map_access" => &map_access(&1, &2),
       "map_set" => &map_set(&1, &2),
       "bonk" => &bonk(&1, &2),
+      "rbonk" => &rbonk(&1, &2),
       "greater_or_equals" => &greater_or_equals(&1, &2)
     }
+  end
+
+  defp concat(nodes, env) do
+    case map_nodes(nodes, env) do
+      [%{kind: :string, value: v}, %{kind: :string, value: v2}] ->
+        Ovo.Ast.string("#{v}#{v2}")
+
+      _ ->
+        :error
+    end
+  end
+
+  defp to_string(nodes, env) do
+    case map_nodes(nodes, env) do
+      [%{kind: k, value: v}] when k in [:string, :float, :integer] ->
+        Ovo.Ast.string("#{v}")
+
+      _ ->
+        :error
+    end
   end
 
   defp invoke(nodes, env) do
@@ -36,6 +61,13 @@ defmodule Ovo.Builtins do
 
       _ ->
         :error
+    end
+  end
+
+  defp errored(nodes, env) do
+    case map_nodes(nodes, env) do
+      [:error] -> Ovo.Ast.bool(true)
+      _ -> Ovo.Ast.bool(false)
     end
   end
 
@@ -100,10 +132,32 @@ defmodule Ovo.Builtins do
     end
   end
 
+  defp rbonk(nodes, env) do
+    case map_nodes(nodes, env) do
+      [%{kind: :string, value: v}] ->
+        Ovo.Runner.bonk(v)
+
+      _ ->
+        :error
+    end
+  end
+
   defp map(nodes, env) do
     case map_nodes(nodes, env) do
       [fun, %Ast{kind: :list, nodes: items}] when is_function(fun) ->
-        Enum.map(items, fn i -> fun.([i]) end)
+        Ovo.Ast.list(Enum.map(items, fn i -> fun.([i]) end))
+
+      _ ->
+        :error
+    end
+  end
+
+  defp reduce(nodes, env) do
+    case map_nodes(nodes, env) do
+      [fun, %Ast{kind: :list, nodes: items}, %Ast{} = initial_value] when is_function(fun) ->
+        Enum.reduce(items, initial_value, fn i, acc ->
+          fun.([acc, i])
+        end)
 
       _ ->
         :error

@@ -5,6 +5,7 @@ defmodule Ovo.Registry do
   The Ovo.Registry holds information about multiple Ovo.Runner, keeping track of their Hash <-> Pid mapping, and of previous results in a stack.
   In a similar way that bonkable lambdas keep track of their previous results in a single interpreter run, Runners are globally bonkable and can pop back their previous execution results.
   """
+
   use Agent
 
   def start, do: start_link(nil)
@@ -52,6 +53,22 @@ defmodule Ovo.Registry do
   def register_runner(pid, hash, metadata \\ %{}) do
     Agent.update(__MODULE__, fn state ->
       state |> Map.put(hash, %{runner: pid, stack: [], last_env: %{}, metadata: metadata})
+    end)
+  end
+
+  def update_runner_arg(hash, position, arg) do
+    Agent.update(__MODULE__, fn state ->
+      update_in(
+        state,
+        [Access.key!(hash), Access.key!(:metadata), Access.key!(:args), Access.at!(position)],
+        fn _ -> arg end
+      )
+    end)
+  end
+
+  def get_runner_args(hash) do
+    Agent.get(__MODULE__, fn state ->
+      get_in(state, [Access.key!(hash), Access.key!(:metadata), Access.key!(:args)])
     end)
   end
 

@@ -16,7 +16,7 @@ defmodule Ovo.Runner do
   end
 
   @spec register(binary()) :: {:ok, binary()} | {:error, any()}
-  def register(code) do
+  def register(code, args \\ []) do
     tokens = Ovo.Tokenizer.tokenize(code)
     {:ok, ast, _} = Ovo.Parser.parse(tokens)
     normalized_form = Ovo.Printer.print(ast)
@@ -28,23 +28,23 @@ defmodule Ovo.Runner do
         {:ok, hash}
 
       {:error, _} ->
-        case Ovo.Runner.instantiate(ast, code, hash) do
+        case Ovo.Runner.instantiate(ast, code, hash, args) do
           {:error, _reason} = e -> e
           {:ok, _pid} -> {:ok, hash}
         end
     end
   end
 
-  defp to_positional_args(%Ovo.Ast{kind: :list, nodes: n}), do: to_positional_args(n)
+  def to_positional_args(%Ovo.Ast{kind: :list, nodes: n}), do: to_positional_args(n)
 
-  defp to_positional_args(inputs) when is_list(inputs) do
+  def to_positional_args(inputs) when is_list(inputs) do
     Enum.with_index(inputs)
     |> Enum.reduce(%{}, fn {v, i}, out ->
       Map.put(out, "arg#{i}", v)
     end)
   end
 
-  defp to_positional_args(inputs), do: to_positional_args([inputs])
+  def to_positional_args(inputs), do: to_positional_args([inputs])
 
   @spec run(binary(), list() | Ovo.Ast.t()) :: Ovo.Ast.t()
   def run(hash, input) do
@@ -61,10 +61,10 @@ defmodule Ovo.Runner do
     Ovo.Registry.pop_result(hash)
   end
 
-  @spec instantiate(Ovo.Ast.t(), binary(), binary()) :: {:ok, pid()}
-  def instantiate(ast, code, hash) do
+  @spec instantiate(Ovo.Ast.t(), binary(), binary(), integer()) :: {:ok, pid()}
+  def instantiate(ast, code, hash, args) do
     {:ok, pid} = start_link(%__MODULE__{ast: ast, code: code, hash: hash})
-    Ovo.Registry.register_runner(pid, hash, %{code: code})
+    Ovo.Registry.register_runner(pid, hash, %{code: code, args: args})
     {:ok, pid}
   end
 end
