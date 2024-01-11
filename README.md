@@ -1,5 +1,7 @@
 # Ovo
 
+## This Ovo version is deprecated - a cleaned up implementation will soon be available :-\)
+
 **Ovo is a small toy/side-project language**
 
 Ovo is hosted by Elixir.
