@@ -18,7 +18,7 @@ defmodule Ovo.Printer do
     "#{sym.value} = #{print_node(expr)}"
   end
 
-  def print_node(%Ovo.Ast{kind: :bonk, value: v}) do
+  def print_node(%Ovo.Ast{kind: :shake, value: v}) do
     "!#{print_node(v)}"
   end
 

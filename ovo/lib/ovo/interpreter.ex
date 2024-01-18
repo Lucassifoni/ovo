@@ -88,7 +88,7 @@ defmodule Ovo.Interpreter do
 
         {env, v}
 
-      :bonk ->
+      :shake ->
         {_env, inner_fn} = evaluate(ast.value, env)
         key = :crypto.strong_rand_bytes(16) |> Base.encode64() |> String.slice(0..16)
 
@@ -98,8 +98,8 @@ defmodule Ovo.Interpreter do
              res = inner_fn.(args)
 
              Agent.update(env, fn state ->
-               bonk_stack = Map.get(state.bonks, key, [])
-               put_in(state, [:bonks, key], [res | bonk_stack])
+               shake_stack = Map.get(state.shakes, key, [])
+               put_in(state, [:shakes, key], [res | shake_stack])
              end)
 
              res
@@ -110,10 +110,13 @@ defmodule Ovo.Interpreter do
       :lambda ->
         arity = length(ast.value)
         program = ast.nodes
+        user_bindings = Env.user_bindings(env)
 
         {env,
          fn args ->
            {:ok, captured_env} = Env.fork(env)
+
+           Env.update_captures(env, user_bindings)
 
            if length(args) != arity do
              {:error, "#{length(args)} argument(s) passed instead of #{arity}"}

@@ -18,7 +18,7 @@ defmodule Ovo.Ast do
           | :condition
           | :lambda
           | :call
-          | :bonk
+          | :shake
 
   @type t :: %__MODULE__{
           kind: kind(),
@@ -52,7 +52,7 @@ defmodule Ovo.Ast do
 
   def assignment(symbol, expr), do: make(:assignment, symbol, expr)
 
-  def bonk(lambda), do: make(:bonk, lambda, [])
+  def shake(lambda), do: make(:shake, lambda, [])
 
   def block(nodes), do: make(:block, nil, nodes)
 

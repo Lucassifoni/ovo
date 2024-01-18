@@ -56,8 +56,8 @@ defmodule Ovo.Runner do
     output
   end
 
-  @spec bonk(binary()) :: Ovo.Ast.t()
-  def bonk(hash) do
+  @spec shake(binary()) :: Ovo.Ast.t()
+  def shake(hash) do
     Ovo.Registry.pop_result(hash)
   end
 

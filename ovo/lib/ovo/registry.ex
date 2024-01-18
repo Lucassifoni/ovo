@@ -3,7 +3,7 @@ defmodule Ovo.Registry do
 
   @moduledoc """
   The Ovo.Registry holds information about multiple Ovo.Runner, keeping track of their Hash <-> Pid mapping, and of previous results in a stack.
-  In a similar way that bonkable lambdas keep track of their previous results in a single interpreter run, Runners are globally bonkable and can pop back their previous execution results.
+  In a similar way that shakable lambdas keep track of their previous results in a single interpreter run, Runners are globally shakable and can pop back their previous execution results.
   """
 
   use Agent

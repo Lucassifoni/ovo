@@ -28,8 +28,8 @@ defmodule Ovo.Builtins do
       "divide" => &divide(&1, &2),
       "map_access" => &map_access(&1, &2),
       "map_set" => &map_set(&1, &2),
-      "bonk" => &bonk(&1, &2),
-      "rbonk" => &rbonk(&1, &2),
+      "shake" => &shake(&1, &2),
+      "rshake" => &rshake(&1, &2),
       "greater_or_equals" => &greater_or_equals(&1, &2)
     }
   end
@@ -115,15 +115,15 @@ defmodule Ovo.Builtins do
     end
   end
 
-  defp bonk(nodes, env) do
+  defp shake(nodes, env) do
     case map_nodes(nodes, env) do
       [%{callable: _fun, key: k}] ->
         Agent.get_and_update(env, fn state ->
-          case state.bonks |> Map.get(k) do
+          case state.shakes |> Map.get(k) do
             nil -> {:error, state}
             [] -> {:error, state}
-            [a] -> {a, state |> put_in([:bonks, k], [])}
-            [h | t] -> {h, state |> put_in([:bonks, k], t)}
+            [a] -> {a, state |> put_in([:shakes, k], [])}
+            [h | t] -> {h, state |> put_in([:shakes, k], t)}
           end
         end)
 
@@ -132,10 +132,10 @@ defmodule Ovo.Builtins do
     end
   end
 
-  defp rbonk(nodes, env) do
+  defp rshake(nodes, env) do
     case map_nodes(nodes, env) do
       [%{kind: :string, value: v}] ->
-        Ovo.Runner.bonk(v)
+        Ovo.Runner.shake(v)
 
       _ ->
         :error

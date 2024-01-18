@@ -214,7 +214,7 @@ defmodule OvoTest do
     parse_print_parse(code)
   end
 
-  test "tokenizes bonks" do
+  test "tokenizes shakes" do
     code = """
     !\\ ->
       add(a, b)
@@ -222,7 +222,7 @@ defmodule OvoTest do
     """
 
     assert Ovo.tokenize(code) == [
-             {:bonk, nil},
+             {:shake, nil},
              {:backslash, nil},
              {:arrow, nil},
              {:symbol, "add"},
@@ -265,7 +265,7 @@ defmodule OvoTest do
     parse_print_parse(code)
   end
 
-  test "n-arity bonked Lambda print loop" do
+  test "n-arity shakeed Lambda print loop" do
     code = """
     !\\a, b ->
       add(a, b)
@@ -331,7 +331,7 @@ defmodule OvoTest do
     {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program.(0))
   end
 
-  test "basic bonking evaluation 2" do
+  test "basic shakeing evaluation 2" do
     program = fn num ->
       """
       sometimes_add_things = !\\a -> if equals(a, 0) then
@@ -344,8 +344,8 @@ defmodule OvoTest do
       sometimes_add_things(#{num})
       sometimes_add_things(add(#{num}, 1))
 
-      bonk(sometimes_add_things)
-      bonk(sometimes_add_things)
+      shake(sometimes_add_things)
+      shake(sometimes_add_things)
       """
     end
 
@@ -408,5 +408,21 @@ defmodule OvoTest do
     """
 
     {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program)
+  end
+
+  test "mutation tests" do
+    program = """
+      foo = 4
+
+      bar = \\a ->
+        add(a, foo)
+      end
+
+      foo = 2
+
+      bar(5)
+    """
+
+    {%Ovo.Ast{kind: :integer, nodes: [], value: 9}, _} = Ovo.run(program)
   end
 end

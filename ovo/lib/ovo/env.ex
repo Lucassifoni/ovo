@@ -3,14 +3,14 @@ defmodule Ovo.Env do
           evaluator_pid: pid(),
           parent: pid() | nil,
           user: map(),
-          bonks: map(),
+          shakes: map(),
           builtins: map()
         }
   defstruct [
     :evaluator_pid,
     :parent,
     :user,
-    :bonks,
+    :shakes,
     :builtins
   ]
 
@@ -39,7 +39,7 @@ defmodule Ovo.Env do
       evaluator_pid: evaluator_pid,
       parent: nil,
       user: %{},
-      bonks: %{},
+      shakes: %{},
       builtins: Ovo.Builtins.builtins()
     }
 
@@ -52,12 +52,20 @@ defmodule Ovo.Env do
       Agent.get(env, & &1)
       |> Map.put(:parent, env)
       |> Map.put(:user, %{})
-      |> Map.put(:bonks, %{})
+      |> Map.put(:shakes, %{})
       |> Map.put(:builtins, %{})
 
     {:ok, fork_pid} = start_link(state)
     Interpreter.register_pid(state.evaluator_pid, fork_pid)
     {:ok, fork_pid}
+  end
+
+  def user_bindings(env) do
+    Agent.get(env, &(&1.user))
+  end
+
+  def update_captures(env, bindings) do
+    Agent.update(env, &(Map.put(&1, :user, Map.merge(&1.user, bindings))))
   end
 
   @spec bind_input(pid(), map()) :: map()
@@ -102,7 +110,7 @@ defmodule Ovo.Env do
     end)
   end
 
-  @spec find_callable(binary(), pid(), list(pid())) :: :error | Ovo.Ast.t()
+  @spec find_value(binary(), pid(), list(pid())) :: :error | Ovo.Ast.t()
   def find_value(name, env, chain \\ []) do
     Agent.get(env, fn state ->
       if Map.has_key?(state.user, name) do
