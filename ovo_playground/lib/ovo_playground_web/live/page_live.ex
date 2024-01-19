@@ -128,8 +128,8 @@ defmodule OvoPlaygroundWeb.PageLive do
     {:noreply, socket |> update_runners |> assign(:result, result)}
   end
 
-  def handle_event("bonk_runner", %{"hash" => hash}, socket) do
-    value = Ovo.Runner.bonk(hash)
+  def handle_event("shake_runner", %{"hash" => hash}, socket) do
+    value = Ovo.Runner.shake(hash)
     {:noreply, socket |> update_runners |> assign(:result, value)}
   end
 

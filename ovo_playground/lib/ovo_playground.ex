@@ -56,7 +56,7 @@ defmodule OvoPlayground do
     """
 
     full_song = """
-    n_bottles = subtract(100, rbonk(`EWTiZxncF`))
+    n_bottles = subtract(100, rshake(`EWTiZxncF`))
 
     run = \\n, out ->
         verse = if greater_or_equals(n, 3) then
@@ -73,7 +73,7 @@ defmodule OvoPlayground do
            out
         else
            nout = invoke(`qjYwZaa3J`, [[out, verse], ``])
-             run(subtract(100, rbonk(`EWTiZxncF`)), nout)
+             run(subtract(100, rshake(`EWTiZxncF`)), nout)
         end
     end
 
