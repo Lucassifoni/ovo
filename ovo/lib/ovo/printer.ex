@@ -8,7 +8,7 @@ defmodule Ovo.Printer do
     end)
   end
 
-  def print_node(%Ovo.Ast{kind: :expr, value: val}), do: print_node(val)
+  def print_node(%Ovo.Ast{kind: :expr, value: val}), do: "(#{print_node(val)})"
 
   def print_node(%Ovo.Ast{kind: :call, value: val, nodes: children}) do
     "#{val.value}(#{Enum.map_join(children, ", ", &print_node/1)})"

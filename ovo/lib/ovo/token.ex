@@ -1,6 +1,25 @@
 defmodule Ovo.Token do
   @moduledoc """
-  An Ovo Token, a tuple carrying the token kind and optional string representation.
+  An Ovo Token, a 2-tuple carrying the token kind and optional string representation.
+  Valid forms are :
+
+      {:string, "binary"}
+      {:symbol, "binary"}
+      {:arrow, nil}
+      {:if, nil}
+      {:else, nil}
+      {:then, nil}
+      {:end, nil}
+      {:number, "binary"}
+      {:equals, nil}
+      {:comma, nil}
+      {:open_paren, nil}
+      {:open_bracket, nil}
+      {:close_paren, nil}
+      {:close_bracket, nil}
+      {:backslash, nil}
+      {true, nil}
+      {false, nil}
   """
 
   @type t_string :: {:string, String.t()}

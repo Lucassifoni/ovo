@@ -84,11 +84,11 @@ defmodule Ovo.Builtins do
 
   defp access(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: :string, value: v}] = n ->
+      [%{kind: :string, value: v}] ->
         data = Ovo.Env.find_value("data", env)
         Map.get(data.value, v)
 
-      b ->
+      _ ->
         :error
     end
   end

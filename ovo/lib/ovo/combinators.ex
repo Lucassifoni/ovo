@@ -1,19 +1,46 @@
 defmodule Ovo.Combinators do
   @moduledoc """
   Parser combinators. Samples below operate on primitives instead of ovo tokens for clarity.
+  Parser combinators do not need to be tied to a particular data structure (tokens) because they
+  simply are higher-order functions over the idea of matching a pattern, or not.
+
+  Combinators are used to express concepts such as "a parser followed by another" (Ovo.Combinators.then/2),
+  "this particular parser, or this one" (Ovo.Combinators.either/2).
+
+  The available combinators in this file are :
+
+  - Ovo.Combinators.nothing/1 : always matches anything, does not emit.
+  - Ovo.Combinators.either/2 : ParserA or ParserB
+  - Ovo.Combinators.then/2 : ParserA then ParserB
+  - Ovo.Combinators.all/1 : All parsers in a list
+  - Ovo.Combinators.any/1 : First matching parser in a list
+  - Ovo.Combinators.repeat/1 : Emits while the parser matches
   """
 
+  @doc """
+  Sample parser that succeeds if the current token is 1, fails otherwise.
+  """
   def sample_one([1 | rest]), do: {:ok, [1], rest}
   def sample_one(a), do: {:error, [], a}
+
+  @doc """
+  Sample parser that succeeds if the current token is ","
+  """
   def sample_comma(["," | rest]), do: {:ok, [","], rest}
   def sample_comma(a), do: {:error, [], a}
 
+  @doc """
+  Sample parser that succeeds if the current token is "a" or "b".
+  """
   def sample_letter(["a" | rest]), do: {:ok, ["a"], rest}
   def sample_letter(["b" | rest]), do: {:ok, ["b"], rest}
   def sample_letter(a), do: {:error, [], a}
 
-  defp maybe_cons([], a), do: a
-  defp maybe_cons(a, b), do: [a | b]
+  @doc """
+  Utility to avoid adding empty list to the output node list.
+  """
+  def maybe_cons([], a), do: a
+  def maybe_cons(a, b), do: [a | b]
 
   @doc """
   Succeeds if either parserA or parserB succeeds.
@@ -36,6 +63,9 @@ defmodule Ovo.Combinators do
     end
   end
 
+  @doc """
+  Always matches, but does not emit a node.
+  """
   def nothing(tokens) do
     {:ok, [], tokens}
   end
@@ -99,7 +129,7 @@ defmodule Ovo.Combinators do
     end
   end
 
-  defp decide(parser, res, rest, tokens) do
+  def decide(parser, res, rest, tokens) do
     case parser.(rest) do
       {:ok, resn, restn} -> {:ok, maybe_cons(resn, res), restn}
       _ -> {:error, [], tokens}

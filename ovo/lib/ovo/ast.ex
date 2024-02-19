@@ -28,27 +28,27 @@ defmodule Ovo.Ast do
   defstruct [:kind, :nodes, :value]
 
   @spec make(kind(), term(), list(t())) :: t()
-  def make(kind \\ :root, value \\ nil, children \\ []),
+  def make(kind, value, children),
     do: %__MODULE__{kind: kind, nodes: children, value: value}
 
   def root(children), do: make(:root, nil, children)
 
-  def float(val), do: make(:float, val)
+  def float(val), do: make(:float, val, [])
 
-  def integer(val), do: make(:integer, val)
+  def integer(val), do: make(:integer, val, [])
 
-  def string(val), do: make(:string, val)
+  def string(val), do: make(:string, val, [])
 
-  def symbol(val), do: make(:symbol, val)
+  def symbol(val), do: make(:symbol, val, [])
 
-  def bool(val), do: make(:bool, val)
+  def bool(val), do: make(:bool, val, [])
 
-  def map(val), do: make(:map, val)
+  def map(val), do: make(:map, val, [])
 
   def list(children), do: make(:list, nil, children)
 
   def expr([val]), do: make(:expr, val, [])
-  def expr(val), do: make(:expr, val, [])
+  def expr(val), do: val
 
   def assignment(symbol, expr), do: make(:assignment, symbol, expr)
 

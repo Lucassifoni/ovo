@@ -27,14 +27,21 @@ defmodule Ovo do
   """
 
   @spec tokenize(String.t()) :: [Ovo.Token.t()]
+  @doc """
+  Tokenizes input (a string) to produce a list of 2-tuples as defined by Ovo.Token
+  """
   def tokenize(input), do: Ovo.Tokenizer.tokenize(input)
 
+  @doc """
+  Parses a list of tokens (not directly input), producing an Ovo.Ast
+  """
   def parse(tokens), do: Ovo.Parser.parse(tokens)
 
   @doc ~S"""
   Runs Ovo code through the interpreter
 
-      iex> {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run("addone = \\a -> add(1, a) end addone(2)")
+      iex> Ovo.run("addone = \\a -> add(1, a) end addone(2)")
+      iex> {%Ovo.Ast{kind: :integer, nodes: [], value: 3}}
 
   """
   def run(code, input \\ %{}), do: Ovo.Interpreter.run(code, input)

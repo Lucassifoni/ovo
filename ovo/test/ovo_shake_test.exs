@@ -1,4 +1,4 @@
-defmodule OvoTestRecursiveshakeedSpecialCase do
+defmodule OvoTestRecursiveShakenSpecialCase do
   use ExUnit.Case
 
   test "fishakenacci" do

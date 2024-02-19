@@ -22,7 +22,6 @@ defmodule Ovo.Converter do
   def ovo_to_elixir(%Ast{kind: :integer, value: v}), do: v
   def ovo_to_elixir(%Ast{kind: :string, value: v}), do: v
   def ovo_to_elixir(%Ast{kind: :symbol, value: v}), do: v
-  def ovo_to_elixir(%Ast{kind: :bool, value: v}), do: v
   def ovo_to_elixir(%Ast{kind: :expr, value: v}), do: ovo_to_elixir(v)
 
   def ovo_to_elixir(%Ast{kind: :map, value: v}),

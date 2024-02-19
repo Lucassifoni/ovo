@@ -61,11 +61,11 @@ defmodule Ovo.Env do
   end
 
   def user_bindings(env) do
-    Agent.get(env, &(&1.user))
+    Agent.get(env, & &1.user)
   end
 
   def update_captures(env, bindings) do
-    Agent.update(env, &(Map.put(&1, :user, Map.merge(&1.user, bindings))))
+    Agent.update(env, &Map.put(&1, :user, Map.merge(&1.user, bindings)))
   end
 
   @spec bind_input(pid(), map()) :: map()

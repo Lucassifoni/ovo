@@ -148,8 +148,10 @@ defmodule OvoTest do
     {:ok,
      %Ovo.Ast{
        kind: :root,
-       value: nil,
-       nodes: [%Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :call}}]
+       nodes: [
+         %Ovo.Ast{kind: :call, nodes: [], value: %Ovo.Ast{kind: :symbol, nodes: [], value: "foo"}}
+       ],
+       value: nil
      }, []} = parse("foo()")
   end
 
@@ -157,16 +159,14 @@ defmodule OvoTest do
     {:ok,
      %Ovo.Ast{
        kind: :root,
-       value: nil,
        nodes: [
          %Ovo.Ast{
-           kind: :expr,
-           value: %Ovo.Ast{
-             kind: :call,
-             nodes: [%Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :symbol}}]
-           }
+           kind: :call,
+           nodes: [%Ovo.Ast{kind: :symbol, nodes: [], value: "bar"}],
+           value: %Ovo.Ast{kind: :symbol, nodes: [], value: "foo"}
          }
-       ]
+       ],
+       value: nil
      }, []} = parse("foo(bar)")
   end
 
@@ -174,19 +174,17 @@ defmodule OvoTest do
     {:ok,
      %Ovo.Ast{
        kind: :root,
-       value: nil,
        nodes: [
          %Ovo.Ast{
-           kind: :expr,
-           value: %Ovo.Ast{
-             kind: :call,
-             nodes: [
-               %Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :symbol}},
-               %Ovo.Ast{kind: :expr, value: %Ovo.Ast{kind: :symbol}}
-             ]
-           }
+           kind: :call,
+           nodes: [
+             %Ovo.Ast{kind: :symbol, nodes: [], value: "bar"},
+             %Ovo.Ast{kind: :symbol, nodes: [], value: "baz"}
+           ],
+           value: %Ovo.Ast{kind: :symbol, nodes: [], value: "foo"}
          }
-       ]
+       ],
+       value: nil
      }, []} = parse("foo(bar, baz)")
   end
 
