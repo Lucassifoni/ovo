@@ -1,12 +1,22 @@
 defmodule Ovo.Parser do
   @moduledoc """
-  Parses a list of Ovo.Token.t() to generate an Ovo.Ast.
+  Parses a list of Ovo.Token.t() to generate an Ovo.Ast
+  Heavily builds on Ovo.Combinators to build higher expressive parsers from small bricks.
   """
 
   alias Ovo.Ast
   alias Ovo.Combinators, as: C
 
+  @doc """
+  Shorthand error form helper.
+  """
+  @spec err(any()) :: {:error, [], [Ovo.Token.t()]}
   def err(tokens), do: {:error, [], tokens}
+
+  @doc """
+  Shorthand valid form helper.
+  """
+  @spec ok(Ovo.Ast.t(), [Ovo.Token.t()]) :: {:ok, Ovo.Ast.t(), [Ovo.Token.t()]}
   def ok(result, rest), do: {:ok, result, rest}
 
   def p_number([{:number, val} | rest] = tokens) do

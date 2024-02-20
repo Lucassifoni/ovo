@@ -8,6 +8,10 @@ defmodule Ovo.Printer do
     end)
   end
 
+  def print({:ok, %Ovo.Ast{} = tree, []}) do
+    print(tree)
+  end
+
   def print_node(%Ovo.Ast{kind: :expr, value: val}), do: "(#{print_node(val)})"
 
   def print_node(%Ovo.Ast{kind: :call, value: val, nodes: children}) do

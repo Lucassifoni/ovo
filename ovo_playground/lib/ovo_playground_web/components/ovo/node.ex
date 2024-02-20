@@ -10,10 +10,11 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
 
   def show_node(assigns) do
     ~H"""
-    <div class={["ast-node", "ast-node-#{@node.kind}"]}>
+    <div class={["border border-black ast-node", "ast-node-#{@node.kind}"]}>
+      <%= Jason.encode!(@path) %>
       <%= case @node.kind do %>
         <% :root -> %>
-          Your program ! <.traverse nodes={@node.nodes} path={["nodes" | @path]} />
+         <.traverse nodes={@node.nodes} path={["nodes" | @path]} />
         <% :float -> %>
           <.float node={@node} path={@path} />
         <% :integer -> %>
@@ -33,7 +34,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
         <% :assignment -> %>
           <.assignment node={@node} path={@path} />
         <% :block -> %>
-          Bloc <.traverse nodes={@node.nodes} path={["nodes" | @path]} />
+           <.traverse nodes={@node.nodes} path={["nodes" | @path]} />
         <% :condition -> %>
           <.condition node={@node} path={@path} />
         <% :lambda -> %>
@@ -69,7 +70,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
 
   def float(assigns) do
     ~H"""
-    <.node_label name="Flottant" />
+    <.node_label name="Float" />
     <input
       type="text"
       inputmode="numeric"
@@ -85,7 +86,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
 
   def integer(assigns) do
     ~H"""
-    <.node_label name="Entier" />
+    <.node_label name="Integer" />
     <input
       type="text"
       inputmode="numeric"
@@ -101,7 +102,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
 
   def string(assigns) do
     ~H"""
-    <.node_label name="Chaîne" />
+    <.node_label name="String" />
     <%= if String.length(@node.value) > 50 do %>
       <textarea style="min-height: 100px"><%= @node.value %></textarea>
     <% else %>
@@ -115,7 +116,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
 
   def symbol(assigns) do
     ~H"""
-    <.node_label name="Symbole" />
+    <.node_label name="Symbol" />
     <input type="text" value={@node.value} phx-keyup={"change_path:#{path_to_string(@path)}"} />
     """
   end
@@ -125,7 +126,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
 
   def bool(assigns) do
     ~H"""
-    <.node_label name="Booléen" /> <%= @node.value %>
+    <.node_label name="Boolean" /> <%= @node.value %>
     <input type="checkbox" checked={@node.value} phx-click={"change_path:#{path_to_string(@path)}"} />
     """
   end
@@ -144,7 +145,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
 
   def list(assigns) do
     ~H"""
-    <.node_label name="Liste" /> [
+    <.node_label name="List" /> [
     <%= for {node, index} <- Enum.with_index(@node.nodes) do %>
       <.show_node node={node} path={[index | ["nodes" | @path]]} />
     <% end %>
@@ -157,6 +158,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
 
   def assignment(assigns) do
     ~H"""
+    <.node_label name="Assign"/>
     <input
       type="text"
       value={@node.value.value}
@@ -196,7 +198,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
 
   def call(assigns) do
     ~H"""
-    <.node_label name={"Appel de #{@node.value.value} avec les arguments"} />
+    <.node_label name={"Call #{@node.value.value}"} />
     <%= for {node, index} <- Enum.with_index(@node.nodes) do %>
       <.show_node node={node} path={[index | ["nodes" | @path]]} />
     <% end %>

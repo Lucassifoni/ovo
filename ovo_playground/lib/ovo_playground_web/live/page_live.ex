@@ -2,24 +2,40 @@ require Protocol
 Protocol.derive(Jason.Encoder, Ovo.Ast, only: [:kind, :nodes, :value])
 
 defmodule OvoPlaygroundWeb.PageLive do
+  alias Ovo.Printer
+  alias OvoPlayground.Transforms
   use OvoPlaygroundWeb, :live_view
 
   alias OvoPlaygroundWeb.Components.Ovo.Node
 
-  @code """
-  val = arg(0)
-  foo = `bar`
-  add(val, 10)
-  """
+
 
   def initial_runner_state do
-    parsed = Ovo.tokenize(@code) |> Ovo.parse()
-
+    ast = Transforms.default()
+    code = Printer.print(ast)
     %{
-      code: @code,
+      code: code,
       args: [],
-      ast: parsed
+      ast: ast
     }
+  end
+
+  def get_ast(socket) do
+    socket.assigns[:pending_runner].ast
+  end
+
+  def update_from_ast(socket, ast) do
+    new_runner = socket.assigns[:pending_runner]
+      |> Map.put(:code, Ovo.Printer.print(ast))
+      |> Map.put(:ast, ast)
+    socket |> assign(:pending_runner, new_runner)
+  end
+
+  def update_from_code(socket, code) do
+    new_runner = socket.assigns[:pending_runner]
+    |> Map.put(:code, code)
+    |> Map.put(:ast, Ovo.Tokenizer.tokenize(code) |> Ovo.Parser.parse)
+    socket |> assign(:pending_runner, new_runner)
   end
 
   def mount(_params, _, socket) do
@@ -102,6 +118,11 @@ defmodule OvoPlaygroundWeb.PageLive do
      |> update_runners}
   end
 
+  def handle_event("push_node", _, socket) do
+    ast = Transforms.push_node(get_ast(socket), Transforms.default_assignment)
+    {:noreply, update_from_ast(socket, ast)}
+  end
+
   def handle_event("code_change", %{"value" => value}, socket) do
     {:noreply,
      assign(socket,
@@ -137,7 +158,7 @@ defmodule OvoPlaygroundWeb.PageLive do
     {:noreply,
      socket
      |> transition_to(:create_runner)
-     |> assign(:pending_runner, initial_runner_state)}
+     |> assign(:pending_runner, initial_runner_state())}
   end
 
   def handle_event(
@@ -230,26 +251,30 @@ defmodule OvoPlaygroundWeb.PageLive do
     value = Map.get(params, "value", nil)
     ast = socket.assigns[:pending_runner].ast |> elem(1)
     path = string_to_path(rest)
-    node = get_in(ast, path)
+    try do
+      node = get_in(ast, path)
+      new_value =
+        case node do
+          %Ovo.Ast{kind: :boolean} -> value
+          %Ovo.Ast{kind: :integer} -> String.to_integer(value)
+          %Ovo.Ast{kind: :float} -> Float.parse(value)
+          %Ovo.Ast{kind: :bool} -> !node.value
+          _ -> value
+        end
 
-    new_value =
-      case node do
-        %Ovo.Ast{kind: :boolean} -> value
-        %Ovo.Ast{kind: :integer} -> String.to_integer(value)
-        %Ovo.Ast{kind: :float} -> Float.parse(value)
-        %Ovo.Ast{kind: :bool} -> !node.value
-        _ -> value
-      end
+      ast = update_in(ast, string_to_path(rest), fn a -> %Ovo.Ast{a | value: new_value} end)
 
-    ast = update_in(ast, string_to_path(rest), fn a -> %Ovo.Ast{a | value: new_value} end)
-
-    {:noreply,
-     socket
-     |> assign(:pending_runner, %{
-       socket.assigns[:pending_runner]
-       | ast: {:ok, ast, []},
-         code: Ovo.Printer.print(ast)
-     })}
+      {:noreply,
+       socket
+       |> assign(:pending_runner, %{
+         socket.assigns[:pending_runner]
+         | ast: {:ok, ast, []},
+           code: Ovo.Printer.print(ast)
+       })}
+    rescue
+      _ ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("evaluate", _, socket) do
