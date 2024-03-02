@@ -82,6 +82,17 @@ defmodule Ovo.Combinators do
     end
 
   @doc """
+  Utility to quickly match a valueless token, but keeping the token value.
+  """
+  def take(sigil),
+    do: fn input ->
+      case input do
+        [{^sigil, nil} | rest] -> {:ok, [sigil], rest}
+        _ -> {:error, [], input}
+      end
+    end
+
+  @doc """
   Succeeds if both parsers succeed. Results are accumulated.
 
       iex> Ovo.Combinators.then(&Ovo.Combinators.sample_one/1, &Ovo.Combinators.sample_comma/1).([1, ","])

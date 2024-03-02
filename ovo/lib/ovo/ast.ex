@@ -15,6 +15,7 @@ defmodule Ovo.Ast do
           | :string
           | :symbol
           | :bool
+          | :infix
           | :map
           | :list
           | :expr
@@ -47,6 +48,12 @@ defmodule Ovo.Ast do
   """
   @spec root(list(t())) :: t()
   def root(children), do: make(:root, nil, children)
+
+  @doc """
+  Instantiates a non-assignment infix operation.
+  """
+  @spec infix(atom(), list(t())) :: t()
+  def infix(operator, [left, right]), do: make(:infix, operator, [left, right])
 
   @doc """
   Instantiates a float node, where val must be a float.

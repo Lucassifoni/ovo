@@ -194,6 +194,17 @@ defmodule Ovo.Parser do
     end
   end
 
+  def p_infixer(tokens) do
+    case C.all([
+           &p_expression/1,
+           C.any([C.take(:different), C.take(:identical), C.take(:lt), C.take(:gt)]),
+           &p_expression/1
+         ]).(tokens) do
+      {:ok, [e1, infix, e2], rest} -> {:ok, Ast.infix(infix, [e1, e2]), rest}
+      b -> b
+    end
+  end
+
   def p_shake(tokens) do
     case C.match(:shake).(tokens) do
       {:ok, _, rest} ->
@@ -278,6 +289,7 @@ defmodule Ovo.Parser do
            &p_assignment/1,
            &p_if/1,
            &p_call/1,
+           &p_infixer/1,
            &p_parenthesized_expression/1,
            &p_value/1
          ]).(tokens) do

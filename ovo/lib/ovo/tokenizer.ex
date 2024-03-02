@@ -119,6 +119,10 @@ defmodule Ovo.Tokenizer do
 
   def walk(pat("`"), s, o, b), do: acc(tail, s, o, b, :string)
   def walk(pat("->"), s, o, b), do: acc(tail, s, o, b, :arrow, nil)
+  def walk(pat("<="), s, o, b), do: acc(tail, s, o, b, :lt, nil)
+  def walk(pat(">="), s, o, b), do: acc(tail, s, o, b, :gt, nil)
+  def walk(pat("=="), s, o, b), do: acc(tail, s, o, b, :identical, nil)
+  def walk(pat("!="), s, o, b), do: acc(tail, s, o, b, :different, nil)
   def walk(pat("="), s, o, b), do: acc(tail, s, o, b, :equals, nil)
   def walk(pat("!"), s, o, b), do: acc(tail, s, o, b, :shake, nil)
   def walk(pat("if"), s, o, b), do: acc(tail, s, o, b, :if, nil)
