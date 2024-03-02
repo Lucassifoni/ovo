@@ -18,6 +18,18 @@ defmodule Ovo.Printer do
     "#{val.value}(#{Enum.map_join(children, ", ", &print_node/1)})"
   end
 
+  def print_node(%Ovo.Ast{kind: :infix, value: symbol, nodes: [e1, e2]}) do
+    s =
+      case symbol do
+        :different -> "!="
+        :identical -> "=="
+        :lt -> "<="
+        :gt -> ">="
+      end
+
+    "#{print_node(e1)} #{s} #{print_node(e2)}"
+  end
+
   def print_node(%Ovo.Ast{kind: :assignment, value: sym, nodes: expr}) do
     "#{sym.value} = #{print_node(expr)}"
   end

@@ -292,6 +292,8 @@ defmodule OvoTest do
 
     say_hi(access(data, `name`), age)
 
+    bar <= baz
+
     fibs = \\a ->
       if greater_or_equals(a, 2) then
           add(fibs(subtract(a, 1)), fibs(subtract(a, 2)))
