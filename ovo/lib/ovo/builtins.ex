@@ -15,6 +15,7 @@ defmodule Ovo.Builtins do
     %{
       "add" => &add(&1, &2),
       "map" => &map(&1, &2),
+      "filter" => &filter(&1, &2),
       "reduce" => &reduce(&1, &2),
       "access" => &access(&1, &2),
       "concat" => &concat(&1, &2),
@@ -30,7 +31,11 @@ defmodule Ovo.Builtins do
       "map_set" => &map_set(&1, &2),
       "shake" => &shake(&1, &2),
       "rshake" => &rshake(&1, &2),
-      "greater_or_equals" => &greater_or_equals(&1, &2)
+      "greater_or_equals" => &greater_or_equals(&1, &2),
+      "lesser_or_equals" => &lesser_or_equals(&1, &2),
+      "strictly_greater" => &strictly_greater(&1, &2),
+      "strictly_smaller" => &strictly_smaller(&1, &2),
+      "different" => &different(&1, &2)
     }
   end
 
@@ -93,19 +98,25 @@ defmodule Ovo.Builtins do
     end
   end
 
-  defp greater_or_equals(nodes, env) do
+  defp compare(nodes, env, operator) do
     case map_nodes(nodes, env) do
       [%{kind: k1, value: v1}, %{kind: k2, value: v2}]
       when k1 in [:float, :integer] and k2 in [:float, :integer] ->
-        if v1 >= v2 do
-          Ovo.Ast.bool(true)
-        else
-          Ovo.Ast.bool(false)
-        end
+        Ovo.Ast.bool(operator.(v1, v2))
 
       _ ->
         :error
     end
+  end
+
+  def greater_or_equals(nodes, env), do: compare(nodes, env, &Kernel.>=/2)
+  def lesser_or_equals(nodes, env), do: compare(nodes, env, &Kernel.<=/2)
+  def strictly_greater(nodes, env), do: compare(nodes, env, &Kernel.>/2)
+  def strictly_smaller(nodes, env), do: compare(nodes, env, &Kernel.</2)
+
+  def different(nodes, env) do
+    %Ast{value: v} = equals(nodes, env)
+    Ovo.Ast.bool(not v)
   end
 
   defp equals(nodes, env) do
@@ -146,6 +157,16 @@ defmodule Ovo.Builtins do
     case map_nodes(nodes, env) do
       [fun, %Ast{kind: :list, nodes: items}] when is_function(fun) ->
         Ovo.Ast.list(Enum.map(items, fn i -> fun.([i]) end))
+
+      _ ->
+        :error
+    end
+  end
+
+  defp filter(nodes, env) do
+    case map_nodes(nodes, env) do
+      [fun, %Ast{kind: :list, nodes: items}] when is_function(fun) ->
+        Ovo.Ast.list(Enum.filter(items, fn i -> fun.([i]) end))
 
       _ ->
         :error

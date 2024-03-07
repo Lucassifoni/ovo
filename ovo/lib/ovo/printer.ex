@@ -19,14 +19,7 @@ defmodule Ovo.Printer do
   end
 
   def print_node(%Ovo.Ast{kind: :infix, value: symbol, nodes: [e1, e2]}) do
-    s =
-      case symbol do
-        :different -> "!="
-        :identical -> "=="
-        :lt -> "<="
-        :gt -> ">="
-      end
-
+    s = Ovo.Infix.token_to_text(symbol)
     "#{print_node(e1)} #{s} #{print_node(e2)}"
   end
 
