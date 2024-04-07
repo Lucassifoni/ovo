@@ -29,7 +29,7 @@ defmodule Ovo.Infix do
   def infix_to_builtin(token) do
     case token do
       :different -> "different"
-      :identical -> "identical"
+      :identical -> "equals"
       :lt -> "lesser_or_equals"
       :gt -> "greater_or_equals"
       :strict_lt -> "strictly_smaller"

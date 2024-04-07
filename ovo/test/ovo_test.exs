@@ -372,7 +372,7 @@ defmodule OvoTest do
     program = """
     b = 1
     c = 2
-    radd = \\a -> if equals(a, 0) then
+    radd = \\a -> if a == (0) then
         radd(add(a, b))
       else
         add(a, c)
@@ -382,7 +382,7 @@ defmodule OvoTest do
     radd(0)
     """
 
-    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program)
+    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program, %{})
   end
 
   test "basic recursion and nesting 3" do
@@ -424,5 +424,16 @@ defmodule OvoTest do
     """
 
     {%Ovo.Ast{kind: :integer, nodes: [], value: 9}, _} = Ovo.run(program)
+  end
+
+  test "rewrites a complex example" do
+    input = """
+    a = 5
+    foo = map(bet, bar)
+    baz = filter(foo, bat)
+    """
+
+    {:ok, parsed, _} = parse(input)
+    assert Ovo.Printer.print(Ovo.Rewrites.rewrite(parsed)) != Ovo.Printer.print(parsed)
   end
 end

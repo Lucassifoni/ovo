@@ -1,16 +1,18 @@
 defmodule Ovo.Builtins do
   @moduledoc """
-  Ovo's standard library. Currently supports very few operations.
+  Ovo's standard library. Currently supports very few operations
   """
   alias Ovo.Ast
 
-  defp map_nodes(nodes, env) do
+  @spec map_nodes(list(Ovo.Ast.t()), pid()) :: list(Ovo.Ast.t())
+  def map_nodes(nodes, env) do
     Enum.map(nodes, fn node ->
       {_, v} = Ovo.Interpreter.evaluate(node, env)
       v
     end)
   end
 
+  @spec builtins() :: %{optional(binary()) => fun()}
   def builtins do
     %{
       "add" => &add(&1, &2),

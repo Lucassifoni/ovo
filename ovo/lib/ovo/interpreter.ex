@@ -5,6 +5,7 @@ defmodule Ovo.Interpreter do
   @moduledoc """
   Basic Ovo Ast interpreter.
   """
+
   alias Ovo.Ast
   alias Ovo.Env
 
@@ -12,11 +13,13 @@ defmodule Ovo.Interpreter do
     Agent.start_link(fn -> initial_value end)
   end
 
+  @spec register_pid(pid(), pid()) :: :ok
   def register_pid(pid, fork_pid) do
     Agent.update(pid, fn pids -> [fork_pid | pids] end)
     :ok
   end
 
+  @spec stop_env(pid()) :: :ok
   def stop_env(pid) do
     pids = Agent.get(pid, & &1)
 
@@ -28,12 +31,16 @@ defmodule Ovo.Interpreter do
     Agent.stop(pid)
   end
 
+  @spec run(Ast.t()) :: {Ovo.Ast.t(), map()}
   def run(ast), do: run(ast, %{})
 
-  def run(code, input) when is_binary(code) do
+  @spec run(binary() | Ast.t(), map()) :: {Ovo.Ast.t(), map()}
+  def run(code, input, log) when is_binary(code) do
     tokens = Ovo.Tokenizer.tokenize(code)
     {:ok, ast, _} = Ovo.Parser.parse(tokens)
-    run(ast, input)
+    rewritten = Ovo.Rewrites.rewrite(ast)
+    log && IO.inspect(rewritten)
+    run(rewritten, input)
   end
 
   def run(%Ast{} = ast, input) do
@@ -55,12 +62,14 @@ defmodule Ovo.Interpreter do
     {v, user_env}
   end
 
+  @spec reduce_nodes(list(Ovo.Ast.t()), pid()) :: {Ovo.Ast.t(), map()}
   def reduce_nodes(nodes, env) do
     Enum.reduce(nodes, {env, nil}, fn node, {ev, _lev} ->
       evaluate(node, ev)
     end)
   end
 
+  @spec evaluate(list(Ovo.Ast.t()) | Ovo.Ast.t(), pid()) :: {Ovo.Ast.t(), map()}
   def evaluate(nodes, env) when is_list(nodes), do: reduce_nodes(nodes, env)
 
   def evaluate(%Ovo.Ast{} = ast, env) do
