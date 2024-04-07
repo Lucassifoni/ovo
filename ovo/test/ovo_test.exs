@@ -443,20 +443,21 @@ defmodule OvoTest do
     # 0x519e91f5
     input = """
     len = length(data)
+    ~~ = \\a -> overflow(a) end
     cycle = \\h, i ->
       if i == len then
         h
       else
-        outa = overflow(add(h, intval(at(data, i))))
-        outb = overflow(add(outa, overflow(outa << 10)))
-        outc = overflow(outb ^ (overflow((outb >> 6))))
-        overflow(cycle(outc, add(i, 1)))
+        out = ~~(add(h, intval(at(data, i))))
+        out = ~~(add(out, ~~(out << 10)))
+        out = ~~(out ^ (~~((out >> 6))))
+        ~~(cycle(out, add(i, 1)))
       end
     end
-    hash = overflow(cycle(0, 0))
-    hash = overflow(add(hash, overflow(hash << 3)))
-    hash = overflow(hash ^ (overflow(hash >> 11)))
-    hash = overflow(add(hash, overflow(hash << 15)))
+    hash = ~~(cycle(0, 0))
+    hash = ~~(add(hash, ~~(hash << 3)))
+    hash = ~~(hash ^ (~~(hash >> 11)))
+    hash = ~~(add(hash, ~~(hash << 15)))
     """
 
     assert {%Ovo.Ast{kind: :integer, nodes: [], value: 0x519E91F5}, _} =
