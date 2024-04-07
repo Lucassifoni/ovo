@@ -436,4 +436,30 @@ defmodule OvoTest do
     {:ok, parsed, _} = parse(input)
     assert Ovo.Printer.print(Ovo.Rewrites.rewrite(parsed)) != Ovo.Printer.print(parsed)
   end
+
+  test "jenkins hash" do
+    # https://en.wikipedia.org/wiki/Jenkins_hash_function
+    # one_at_a_time("The quick brown fox jumps over the lazy dog", 43)
+    # 0x519e91f5
+    input = """
+    len = length(data)
+    cycle = \\h, i ->
+      if i == len then
+        h
+      else
+        outa = overflow(add(h, intval(at(data, i))))
+        outb = overflow(add(outa, overflow(outa << 10)))
+        outc = overflow(outb ^ (overflow((outb >> 6))))
+        overflow(cycle(outc, add(i, 1)))
+      end
+    end
+    hash = overflow(cycle(0, 0))
+    hash = overflow(add(hash, overflow(hash << 3)))
+    hash = overflow(hash ^ (overflow(hash >> 11)))
+    hash = overflow(add(hash, overflow(hash << 15)))
+    """
+
+    assert {%Ovo.Ast{kind: :integer, nodes: [], value: 0x519E91F5}, _} =
+             Ovo.run(input, "The quick brown fox jumps over the lazy dog")
+  end
 end

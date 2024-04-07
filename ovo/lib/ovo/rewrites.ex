@@ -5,7 +5,7 @@ defmodule Ovo.Rewrites do
     %Ast{
       kind: :call,
       value: %Ovo.Ast{kind: :symbol, nodes: [], value: Ovo.Infix.infix_to_builtin(op)},
-      nodes: [left, right]
+      nodes: [rw(left), rw(right)]
     }
   end
 

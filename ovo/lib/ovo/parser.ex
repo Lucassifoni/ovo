@@ -196,9 +196,19 @@ defmodule Ovo.Parser do
 
   def p_infixer(tokens) do
     case C.all([
-           C.any([&p_symbol/1, &p_parenthesized_expression/1]),
-           C.any([C.take(:different), C.take(:identical), C.take(:lt), C.take(:gt)]),
-           C.any([&p_symbol/1, &p_parenthesized_expression/1])
+           C.any([&p_symbol/1, &p_parenthesized_expression/1, &p_value/1]),
+           C.any([
+             C.take(:different),
+             C.take(:identical),
+             C.take(:lt),
+             C.take(:gt),
+             C.take(:strict_gt),
+             C.take(:strict_lt),
+             C.take(:xor),
+             C.take(:lshift),
+             C.take(:rshift)
+           ]),
+           C.any([&p_symbol/1, &p_parenthesized_expression/1, &p_value/1])
          ]).(tokens) do
       {:ok, [e1, infix, e2], rest} -> {:ok, Ast.infix(infix, [e1, e2]), rest}
       b -> b

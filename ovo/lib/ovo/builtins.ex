@@ -37,8 +37,91 @@ defmodule Ovo.Builtins do
       "lesser_or_equals" => &lesser_or_equals(&1, &2),
       "strictly_greater" => &strictly_greater(&1, &2),
       "strictly_smaller" => &strictly_smaller(&1, &2),
-      "different" => &different(&1, &2)
+      "different" => &different(&1, &2),
+      "length" => &o_len(&1, &2),
+      "intval" => &intval(&1, &2),
+      "at" => &at(&1, &2),
+      "lshift" => &lshift(&1, &2),
+      "rshift" => &rshift(&1, &2),
+      "xor" => &xor(&1, &2),
+      "overflow" => &overflow(&1, &2)
     }
+  end
+
+  defp overflow(nodes, env) do
+    import Bitwise
+
+    case map_nodes(nodes, env) do
+      [%{kind: :integer, value: v}] ->
+        Ovo.Ast.integer(v &&& 0xFFFFFFFF)
+
+      _ ->
+        :error
+    end
+  end
+
+  defp lshift(nodes, env) do
+    import Bitwise
+
+    case map_nodes(nodes, env) do
+      [%{kind: :integer, value: v}, %{kind: :integer, value: v1}] ->
+        Ovo.Ast.integer(v <<< v1)
+
+      _ ->
+        :error
+    end
+  end
+
+  defp rshift(nodes, env) do
+    import Bitwise
+
+    case map_nodes(nodes, env) do
+      [%{kind: :integer, value: v}, %{kind: :integer, value: v1}] ->
+        Ovo.Ast.integer(v >>> v1)
+
+      _ ->
+        :error
+    end
+  end
+
+  defp xor(nodes, env) do
+    import Bitwise
+
+    case map_nodes(nodes, env) do
+      [%{kind: :integer, value: v}, %{kind: :integer, value: v1}] ->
+        Ovo.Ast.integer(bxor(v, v1))
+
+      _ ->
+        :error
+    end
+  end
+
+  defp intval(nodes, env) do
+    case map_nodes(nodes, env) do
+      [%{kind: :string, value: v}] ->
+        <<k::utf8>> = v
+        Ovo.Ast.integer(k)
+
+      _ ->
+        :error
+    end
+  end
+
+  defp o_len(nodes, env) do
+    case map_nodes(nodes, env) do
+      [%{kind: :string, value: v}] -> Ovo.Ast.integer(String.length(v))
+      _ -> :error
+    end
+  end
+
+  defp at(nodes, env) do
+    case map_nodes(nodes, env) do
+      [%{kind: :string, value: v}, %{kind: :integer, value: v1}] ->
+        Ovo.Ast.string(String.at(v, v1))
+
+      _ ->
+        :error
+    end
   end
 
   defp concat(nodes, env) do

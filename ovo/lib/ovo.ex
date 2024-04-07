@@ -44,5 +44,5 @@ defmodule Ovo do
       iex> {%Ovo.Ast{kind: :integer, nodes: [], value: 3}}
 
   """
-  def run(code, input \\ %{}, log \\ false), do: Ovo.Interpreter.run(code, input, log)
+  def run(code, input \\ %{}), do: Ovo.Interpreter.run(code, input)
 end

@@ -6,6 +6,9 @@ defmodule Ovo.Infix do
 
   def token_to_text(token) do
     case token do
+      :xor -> "^"
+      :lshift -> "<<"
+      :rshift -> ">>"
       :different -> "!="
       :identical -> "=="
       :lt -> "<="
@@ -23,6 +26,9 @@ defmodule Ovo.Infix do
       ">=" -> :gt
       ">" -> :strict_gt
       "<" -> :strict_lt
+      "^" -> :xor
+      ">>" -> :rshift
+      "<<" -> :lshift
     end
   end
 
@@ -34,6 +40,9 @@ defmodule Ovo.Infix do
       :gt -> "greater_or_equals"
       :strict_lt -> "strictly_smaller"
       :strict_gt -> "strictly_greater"
+      :xor -> "xor"
+      :lshift -> "lshift"
+      :rshift -> "rshift"
     end
   end
 end

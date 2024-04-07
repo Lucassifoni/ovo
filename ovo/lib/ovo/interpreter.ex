@@ -35,11 +35,10 @@ defmodule Ovo.Interpreter do
   def run(ast), do: run(ast, %{})
 
   @spec run(binary() | Ast.t(), map()) :: {Ovo.Ast.t(), map()}
-  def run(code, input, log) when is_binary(code) do
+  def run(code, input) when is_binary(code) do
     tokens = Ovo.Tokenizer.tokenize(code)
     {:ok, ast, _} = Ovo.Parser.parse(tokens)
     rewritten = Ovo.Rewrites.rewrite(ast)
-    log && IO.inspect(rewritten)
     run(rewritten, input)
   end
 
