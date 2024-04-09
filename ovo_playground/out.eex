@@ -1,0 +1,24 @@
+len = length(arg(0))
+~~ =   \a ->
+    overflow(a)
+  end
+
+cycle =   \h, i ->
+    if i == len then
+  h
+else
+  out = ~~(add(h, intval(at(arg(0), i))))
+out = ~~(add(out, ~~(out << 10)))
+out = ~~(out ^ (~~((out >> 6))))
+~~(cycle(out, add(i, 1)))
+end
+
+  end
+
+invoke(`yfHDp`, [arg(0)])
+`<%= n %>`
+hash = ~~(cycle(0, 0))
+hash = ~~(add(hash, ~~(hash << 3)))
+hash = ~~(hash ^ (~~(hash >> 11)))
+hash = ~~(add(hash, ~~(hash << 15)))
+hex(hash)

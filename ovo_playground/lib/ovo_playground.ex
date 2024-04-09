@@ -8,25 +8,25 @@ defmodule OvoPlayground do
   """
 
   def register_bottles_example do
-    # hashes to yfHDpFR9G
+    # hashes to yfHDp
     register = """
     arg(0)
     """
 
-    # hashes to U2JfjlnOw
+    # hashes to U2Jfj
     filler = """
     foo = \\n ->
       if equals(n, 0) then
         0
       else
-        invoke(`yfHDpFR9G`, [n])
+        invoke(`yfHDp`, [n])
         foo(subtract(n, 1))
       end
     end
     foo(arg(0))
     """
 
-    # hashes to 3wZLTOnsV
+    # hashes to 3wZLT
     join = """
     join = \\list,  joiner ->
       reduce(\\a, b ->
@@ -37,43 +37,43 @@ defmodule OvoPlayground do
     join(arg(0), arg(1))
     """
 
-    # hashes to bOtQKxR0l
+    # hashes to bOtQK
     last_bottle = """
     terms = [arg(0), `bottle of beer on the wall`, arg(0), `bottle of beer.`, `Take one down and pass it around. No more bottles of beer on the wall.`]
-    invoke(`3wZLTOnsV`, [map(\\a -> to_string(a) end, terms), ` `])
+    invoke(`3wZLT`, [map(\\a -> to_string(a) end, terms), ` `])
     """
 
-    # hashes to sYfB4ZArc
+    # hashes to sYfB4
     two_bottles = """
     terms = [arg(0), `bottles of beer on the wall`, arg(0), `bottles of beer.`, `Take one down and pass it around`, subtract(arg(0), 1), `bottle of beer on the wall.`]
-    invoke(`3wZLTOnsV`, [map(\\a -> to_string(a) end, terms), ` `])
+    invoke(`3wZLT`, [map(\\a -> to_string(a) end, terms), ` `])
     """
 
-    # hashes to 8CnXnHynu
+    # hashes to 8CnXn
     normal_bottles = """
     terms = [arg(0), `bottles of beer on the wall`, arg(0), `bottles of beer.`, `Take one down and pass it around`, subtract(arg(0), 1), `bottles of beer on the wall.`]
-    invoke(`3wZLTOnsV`, [map(\\a -> to_string(a) end, terms), ` `])
+    invoke(`3wZLT`, [map(\\a -> to_string(a) end, terms), ` `])
     """
 
     full_song = """
-    n_bottles = subtract(100, rshake(`yfHDpFR9G`))
+    n_bottles = subtract(100, rshake(`yfHDp`))
 
     run = \\n, out ->
         verse = if greater_or_equals(n, 3) then
-            invoke(`8CnXnHynu`, [n])
+            invoke(`8CnXn`, [n])
         else
             if greater_or_equals(n, 2) then
-                invoke(`sYfB4ZArc`, [n])
+                invoke(`sYfB4`, [n])
             else
-                invoke(`bOtQKxR0l`, [n])
+                invoke(`bOtQK`, [n])
              end
         end
 
         if equals(n, 0) then
            out
         else
-           nout = invoke(`3wZLTOnsV`, [[out, verse], ``])
-             run(subtract(100, rshake(`yfHDpFR9G`)), nout)
+           nout = invoke(`3wZLT`, [[out, verse], ``])
+             run(subtract(100, rshake(`yfHDp`)), nout)
         end
     end
 
@@ -93,7 +93,7 @@ defmodule OvoPlayground do
     end
   end
 
-  def register_alice_examples() do
+  def register_alice_examples do
     legitimate_hash = """
     len = length(arg(0))
     ~~ = \\a -> overflow(a) end
@@ -114,54 +114,73 @@ defmodule OvoPlayground do
     hex(hash)
     """
 
+    # hashes to yfHDp
     logger = """
     arg(0)
     """
 
     for {code, name, args} <- [
-          {legitimate_hash, "hash", ["\"the quick brown fox\""]},
           {logger, "logger", ["100"]}
         ] do
       Ovo.Runner.register(code, name, args)
     end
   end
 
-  def inject_code(injection) do
-    """
+  def register_alice_tricks do
+    totally_legitimate_hash_function_nothing_to_see_here = """
     len = length(arg(0))
-    ~~ = \\a -> overflow(a) end
-    cycle = \\h, i ->
-      if i == len then
-        h
-      else
-        out = ~~(add(h, intval(at(arg(0), i))))
-        out = ~~(add(out, ~~(out << 10)))
-        out = ~~(out ^ (~~((out >> 6))))
-        ~~(cycle(out, add(i, 1)))
+    ~~ =   \\a ->
+        overflow(a)
       end
+
+    cycle =   \\h, i ->
+        if i == len then
+      h
+    else
+      out = ~~(add(h, intval(at(arg(0), i))))
+    out = ~~(add(out, ~~(out << 10)))
+    out = ~~(out ^ (~~((out >> 6))))
+    ~~(cycle(out, add(i, 1)))
     end
-    foo = `#{injection}`
+
+      end
+
+    invoke(`yfHDp`, [arg(0)])
+    `sH24Qy6Tp5w9/w==`
     hash = ~~(cycle(0, 0))
     hash = ~~(add(hash, ~~(hash << 3)))
     hash = ~~(hash ^ (~~(hash >> 11)))
     hash = ~~(add(hash, ~~(hash << 15)))
     hex(hash)
     """
+
+    for {code, name, args} <- [
+          {totally_legitimate_hash_function_nothing_to_see_here, "hash",
+           ["\"the quick brown fox\""]}
+        ] do
+      Ovo.Runner.register(code, name, args)
+    end
   end
 
-  def find_collision() do
-    target = "yfHD"
+  def find_collision do
+    target = "Sj2py"
+    # sH24Qy6Tp5w9/w==
+    {:ok, template} = File.read("out.eex")
+    quoted = EEx.compile_string(template)
 
-    for i <- 0..999_999_999_999_999 do
-      code = inject_code(i)
-      tokens = Ovo.Tokenizer.tokenize(code)
-      {:ok, ast, _} = Ovo.Parser.parse(tokens)
-      normalized_form = Ovo.Printer.print(ast)
-      hash = :crypto.hash(:md5, normalized_form) |> Base.encode64() |> String.slice(0..3)
+    for _m <- 0..16 do
+      Task.start(fn ->
+        for _ <- 0..999_999_999 do
+          s = :crypto.strong_rand_bytes(10)
+          n = Base.encode64(s)
+          {normalized_form, _} = Code.eval_quoted(quoted, n: n)
+          hash = :crypto.hash(:md5, normalized_form) |> Base.encode64() |> String.slice(0..5)
 
-      if hash == target do
-        throw(i)
-      end
+          if hash == target do
+            IO.inspect([n])
+          end
+        end
+      end)
     end
   end
 end

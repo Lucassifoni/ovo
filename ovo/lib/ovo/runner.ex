@@ -20,8 +20,8 @@ defmodule Ovo.Runner do
     tokens = Ovo.Tokenizer.tokenize(code)
     {:ok, ast, _} = Ovo.Parser.parse(tokens)
     normalized_form = Ovo.Printer.print(ast)
-    hash = :crypto.hash(:md5, normalized_form) |> Base.encode64() |> String.slice(0..3)
-    Logger.info("Registered program at hash #{hash}")
+    hash = :crypto.hash(:md5, normalized_form) |> Base.encode64() |> String.slice(0..4)
+    Logger.info("Registered program with code #{code} at hash #{hash}")
 
     case Ovo.Registry.find_runner(hash) do
       {:ok, _pid} ->
