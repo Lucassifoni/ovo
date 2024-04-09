@@ -19,7 +19,7 @@ defmodule OvoDistributionTest do
     {:ok, hash1} = Ovo.Runner.register(code1, "foo")
     {:ok, hash2} = Ovo.Runner.register(code2, "bar")
 
-    assert hash2 == "1I9J"
+    assert hash2 == "1I9Jp"
 
     assert %Ast{kind: :integer, value: 11, nodes: []} ==
              Ovo.Registry.run_chain([hash2, hash1], [5])
@@ -34,7 +34,7 @@ defmodule OvoDistributionTest do
              Ovo.Runner.shake(hash2)
 
     assert %Ast{kind: :integer, value: 16, nodes: []} ==
-             Ovo.Runner.run("1I9J", [8])
+             Ovo.Runner.run("1I9Jp", [8])
   end
 
   test "program linking 2" do
@@ -72,11 +72,11 @@ defmodule OvoDistributionTest do
 
     {:ok, hash} = Ovo.Runner.register(code, "foo")
 
-    assert hash == "1I9J"
+    assert hash == "1I9Jp"
 
     code2 = """
     z = add(arg(0), 5)
-    invoke(`1I9J`, [z])
+    invoke(`1I9Jp`, [z])
     """
 
     {:ok, dependent_hash} = Ovo.Runner.register(code2, "bar")
@@ -113,7 +113,7 @@ defmodule OvoDistributionTest do
     {:ok, dependent_program} =
       Ovo.Runner.register(
         """
-          invoke(`9toz`, [2])
+          invoke(`9tozX`, [2])
         """,
         "test"
       )
