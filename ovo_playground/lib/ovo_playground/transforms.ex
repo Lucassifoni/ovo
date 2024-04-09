@@ -16,9 +16,10 @@ defmodule OvoPlayground.Transforms do
   defp nodes(%Ovo.Ast{nodes: nodes}), do: nodes
   defp concat(a, b), do: list(a) ++ list(b)
 
-  def maybe_rewrap({:ok, %Ovo.Ast{}=ast, []}, fun) do
+  def maybe_rewrap({:ok, %Ovo.Ast{} = ast, []}, fun) do
     {:ok, fun.(ast), []}
   end
+
   def maybe_rewrap(%Ovo.Ast{} = ast, fun) do
     fun.(ast)
   end

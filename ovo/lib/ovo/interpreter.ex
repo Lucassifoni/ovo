@@ -38,8 +38,7 @@ defmodule Ovo.Interpreter do
   def run(code, input) when is_binary(code) do
     tokens = Ovo.Tokenizer.tokenize(code)
     {:ok, ast, _} = Ovo.Parser.parse(tokens)
-    rewritten = Ovo.Rewrites.rewrite(ast)
-    run(rewritten, input)
+    run(ast, input)
   end
 
   def run(%Ast{} = ast, input) do
@@ -53,7 +52,9 @@ defmodule Ovo.Interpreter do
 
     register_pid(evaluator_pid, env)
 
-    {env, v} = evaluate(ast, env)
+    rewritten = Ovo.Rewrites.rewrite(ast)
+
+    {env, v} = evaluate(rewritten, env)
 
     user_env = Env.get_user_env(env)
     stop_env(evaluator_pid)

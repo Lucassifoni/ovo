@@ -14,7 +14,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
       <%= Jason.encode!(@path) %>
       <%= case @node.kind do %>
         <% :root -> %>
-         <.traverse nodes={@node.nodes} path={["nodes" | @path]} />
+          <.traverse nodes={@node.nodes} path={["nodes" | @path]} />
         <% :float -> %>
           <.float node={@node} path={@path} />
         <% :integer -> %>
@@ -34,7 +34,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
         <% :assignment -> %>
           <.assignment node={@node} path={@path} />
         <% :block -> %>
-           <.traverse nodes={@node.nodes} path={["nodes" | @path]} />
+          <.traverse nodes={@node.nodes} path={["nodes" | @path]} />
         <% :condition -> %>
           <.condition node={@node} path={@path} />
         <% :lambda -> %>
@@ -158,7 +158,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
 
   def assignment(assigns) do
     ~H"""
-    <.node_label name="Assign"/>
+    <.node_label name="Assign" />
     <input
       type="text"
       value={@node.value.value}

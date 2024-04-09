@@ -458,9 +458,10 @@ defmodule OvoTest do
     hash = ~~(add(hash, ~~(hash << 3)))
     hash = ~~(hash ^ (~~(hash >> 11)))
     hash = ~~(add(hash, ~~(hash << 15)))
+    hex(hash)
     """
 
-    assert {%Ovo.Ast{kind: :integer, nodes: [], value: 0x519E91F5}, _} =
+    assert {%Ovo.Ast{kind: :string, nodes: [], value: "519E91F5"}, _} =
              Ovo.run(input, "The quick brown fox jumps over the lazy dog")
   end
 end

@@ -1,7 +1,7 @@
 defmodule Ovo.Runner do
-  @type t() :: %{ast: Ovo.Ast.t(), code: binary(), hash: binary()}
+  @type t() :: %{ast: Ovo.Ast.t(), code: binary(), hash: binary(), name: binary()}
 
-  defstruct ast: nil, code: nil, hash: nil
+  defstruct ast: nil, code: "", hash: "", name: ""
 
   @moduledoc """
   An ovo Runner holds on an AST and is managed by an Ovo.Registry, holding on a stack of previous results.
@@ -15,12 +15,12 @@ defmodule Ovo.Runner do
     Agent.start_link(fn -> initial_value end)
   end
 
-  @spec register(binary()) :: {:ok, binary()} | {:error, any()}
-  def register(code, args \\ []) do
+  @spec register(binary(), binary()) :: {:ok, binary()} | {:error, any()}
+  def register(code, name, args \\ []) do
     tokens = Ovo.Tokenizer.tokenize(code)
     {:ok, ast, _} = Ovo.Parser.parse(tokens)
     normalized_form = Ovo.Printer.print(ast)
-    hash = :crypto.hash(:sha256, normalized_form) |> Base.encode64() |> String.slice(0..8)
+    hash = :crypto.hash(:md5, normalized_form) |> Base.encode64() |> String.slice(0..3)
     Logger.info("Registered program at hash #{hash}")
 
     case Ovo.Registry.find_runner(hash) do
@@ -28,7 +28,7 @@ defmodule Ovo.Runner do
         {:ok, hash}
 
       {:error, _} ->
-        case Ovo.Runner.instantiate(ast, code, hash, args) do
+        case Ovo.Runner.instantiate(ast, code, name, hash, args) do
           {:error, _reason} = e -> e
           {:ok, _pid} -> {:ok, hash}
         end
@@ -61,10 +61,10 @@ defmodule Ovo.Runner do
     Ovo.Registry.pop_result(hash)
   end
 
-  @spec instantiate(Ovo.Ast.t(), binary(), binary(), integer()) :: {:ok, pid()}
-  def instantiate(ast, code, hash, args) do
-    {:ok, pid} = start_link(%__MODULE__{ast: ast, code: code, hash: hash})
-    Ovo.Registry.register_runner(pid, hash, %{code: code, args: args})
+  @spec instantiate(Ovo.Ast.t(), binary(), binary(), binary(), integer()) :: {:ok, pid()}
+  def instantiate(ast, code, name, hash, args) do
+    {:ok, pid} = start_link(%__MODULE__{ast: ast, code: code, name: name, hash: hash})
+    Ovo.Registry.register_runner(pid, hash, %{code: code, name: name, args: args})
     {:ok, pid}
   end
 end

@@ -1,159 +1,162 @@
-<%= case @state do %>
-  <% :idle -> %>
-    <div class="bg-slate-300 p-4">
-      <h3>Your runners :</h3>
-      <div class="flex flex-wrap">
-        <%= for {hash, runner} <- @runners do %>
-          <div class="bg-slate-200 p-2 m-4 min-w-[240px]">
-            <h4 class="mb-2 text-lg font-bold">
-              <%= hash %>
+<div class="p-2" style={"filter: hue-rotate(#{@user.hue})"}>
+  Welcome, <%= @user.name %> !
+  <%= case @state do %>
+    <% :idle -> %>
+      <div class="bg-slate-300 p-4">
+        <h3>Your runners :</h3>
+        <div class="flex flex-wrap">
+          <%= for {hash, runner} <- @runners do %>
+            <div class="bg-slate-200 p-2 m-4 min-w-[240px]">
+              <h4 class="mb-2 text-lg font-bold">
+                <%= runner.metadata.name %>
+                <span class="text-xs font-normal bg-white rounded"><%= hash %></span>
+                <button
+                  class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
+                  phx-click="chain"
+                  phx-value-hash={hash}
+                >
+                  chain
+                </button>
+              </h4>
+              <%= for {arg, index} <- Enum.with_index(runner.metadata.args) do %>
+                <div>
+                  Arg<%= index %>
+                  <input
+                    type="text"
+                    phx-keyup="change_runner_arg"
+                    phx-value-hash={runner.hash}
+                    phx-value-index={index}
+                    value={arg}
+                  />
+                </div>
+              <% end %>
+
+              <pre class="text-xs font-mono bg-slate-700 text-white p-4 mb-2"><code><%= String.trim(runner.metadata.code) %></code></pre>
+              <h4 class="mb-2">last results</h4>
+              <div class="max-w-[260px]">
+                <%= for r <- runner.stack |> Enum.reverse do %>
+                  <Node.show_node node={r} depth={0} path={[]} />
+                <% end %>
+              </div>
+              <hr />
               <button
                 class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
-                phx-click="chain"
+                phx-click="run_runner"
                 phx-value-hash={hash}
               >
-                chain
+                run
               </button>
-            </h4>
-            <%= for {arg, index} <- Enum.with_index(runner.metadata.args) do %>
-              <div>
-                Arg<%= index %>
-                <input
-                  type="text"
-                  phx-keyup="change_runner_arg"
-                  phx-value-hash={runner.hash}
-                  phx-value-index={index}
-                  value={arg}
-                />
-              </div>
-            <% end %>
 
-            <pre class="text-xs font-mono bg-slate-700 text-white p-4 mb-2"><code><%= String.trim(runner.metadata.code) %></code></pre>
-            <h4 class="mb-2">last results</h4>
-            <div class="max-w-[260px]">
-              <%= for r <- runner.stack |> Enum.reverse do %>
-                <Node.show_node node={r} depth={0} path={[]} />
-              <% end %>
+              <button
+                class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
+                phx-click="shake_runner"
+                phx-value-hash={hash}
+              >
+                shake
+              </button>
             </div>
-            <hr />
-            <button
-              class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
-              phx-click="run_runner"
-              phx-value-hash={hash}
-            >
-              run
-            </button>
-
-            <button
-              class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
-              phx-click="shake_runner"
-              phx-value-hash={hash}
-            >
-              shake
-            </button>
-          </div>
-        <% end %>
-      </div>
-      <div>
-        <h3>Your chains :</h3>
-        <%= for {chain, index} <- Enum.with_index(@chains) do %>
-          <div class="bg-slate-200 p-2 m-4 min-w-[240px]">
-            <%= chain.chain |> Enum.join(", ") %>
-            <%= for {arg, aindex} <- Enum.with_index(chain.args) do %>
-              <div>
-                Arg <%= aindex %>
-                <input
-                  type="text"
-                  phx-keyup="update_chain_arg"
-                  phx-value-chain_index={index}
-                  phx-value-arg_index={aindex}
-                  value={arg}
-                />
-              </div>
-            <% end %>
-            <button
-              class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
-              phx-click="run_chain"
-              phx-value-chain_index={index}
-            >
-              run chain
-            </button>
-          </div>
-        <% end %>
-      </div>
-      <div>
-        <h3>Last global result :</h3>
-        <%= if !is_nil(@result) and @result != :error do %>
-          <Node.show_node node={@result} depth={0} path={[]} />
-        <% end %>
-      </div>
-      <button
-        class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
-        phx-click="create_runner"
-      >
-        create a new runner
-      </button>
-      <%= if @pending_chain != [] do %>
+          <% end %>
+        </div>
+        <div>
+          <h3>Your chains :</h3>
+          <%= for {chain, index} <- Enum.with_index(@chains) do %>
+            <div class="bg-slate-200 p-2 m-4 min-w-[240px]">
+              <%= chain.chain |> Enum.join(", ") %>
+              <%= for {arg, aindex} <- Enum.with_index(chain.args) do %>
+                <div>
+                  Arg <%= aindex %>
+                  <input
+                    type="text"
+                    phx-keyup="update_chain_arg"
+                    phx-value-chain_index={index}
+                    phx-value-arg_index={aindex}
+                    value={arg}
+                  />
+                </div>
+              <% end %>
+              <button
+                class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
+                phx-click="run_chain"
+                phx-value-chain_index={index}
+              >
+                run chain
+              </button>
+            </div>
+          <% end %>
+        </div>
+        <div>
+          <h3>Last global result :</h3>
+          <%= if !is_nil(@result) and @result != :error do %>
+            <Node.show_node node={@result} depth={0} path={[]} />
+          <% end %>
+        </div>
         <button
           class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
-          phx-click="validate_chain"
+          phx-click="create_runner"
         >
-          validate the chain <%= @pending_chain |> Enum.join(", ") %>
+          create a new runner
         </button>
-      <% end %>
-    </div>
-  <% :create_runner -> %>
-    <div class="result bg-slate-200 w-full min-h-[24px] p-4 pt-2">
-      <.blue_button click="cancel" label="back" />
-    </div>
-    <div class="arena">
-      <div class="code bg-slate-300 p-4">
-        <h4 class="mb-2">
-          Args: <%= @pending_runner.args |> length %>
-          <.blue_button click="add_arg" label="+arg" />
-        </h4>
-        <textarea phx-keyup="code_change">
+        <%= if @pending_chain != [] do %>
+          <button
+            class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
+            phx-click="validate_chain"
+          >
+            validate the chain <%= @pending_chain |> Enum.join(", ") %>
+          </button>
+        <% end %>
+      </div>
+    <% :create_runner -> %>
+      <div class="result bg-slate-200 w-full min-h-[24px] p-4 pt-2">
+        <.blue_button click="cancel" label="back" />
+      </div>
+      <div class="arena">
+        <div class="code bg-slate-300 p-4">
+          <h4 class="mb-2">
+            Args: <%= @pending_runner.args |> length %>
+            <.blue_button click="add_arg" label="+arg" />
+          </h4>
+          <textarea phx-keyup="code_change">
             <%= @pending_runner.code %>
         </textarea>
 
-        <%= for {arg, index} <- Enum.with_index(@pending_runner.args) do %>
-          <div class="my-2">
-            Arg<%= index %>
-            <input type="text" phx-keyup="change_arg" phx-value-index={index} value={arg} />
-            <button phx-click="delete_arg" phx-value-index={index}>x</button>
-          </div>
-        <% end %>
+          <%= for {arg, index} <- Enum.with_index(@pending_runner.args) do %>
+            <div class="my-2">
+              Arg<%= index %>
+              <input type="text" phx-keyup="change_arg" phx-value-index={index} value={arg} />
+              <button phx-click="delete_arg" phx-value-index={index}>x</button>
+            </div>
+          <% end %>
 
-        <.blue_button click="evaluate" label="evaluate" />
-        <%= case @result do %>
-          <% nil -> %>
-          <% :error -> %>
-          <% a -> %>
-            <.blue_button click="register" label="register this runner" />
-        <% end %>
+          <.blue_button click="evaluate" label="evaluate" />
+          <%= case @result do %>
+            <% nil -> %>
+            <% :error -> %>
+            <% a -> %>
+              <.blue_button click="register" label="register this runner" />
+          <% end %>
+        </div>
+        <div class="viewer bg-slate-500 p-4">
+          <%= case @pending_runner.ast do %>
+            <% {:ok, parsed, []} -> %>
+              <Node.show_node node={parsed} depth={0} path={[]} />
+            <% _ -> %>
+              parse error.
+          <% end %>
+          <button phx-click="push_node">+ assignment</button>
+        </div>
+        <div class="result bg-slate-200 w-full min-h-[24px] p-4">
+          <%= case @result do %>
+            <% nil -> %>
+              please start by evaluating a runner.
+            <% :error -> %>
+              something went wrong.
+            <% a -> %>
+              <Node.show_node node={a} depth={0} path={[]} />
+          <% end %>
+        </div>
       </div>
-      <div class="viewer bg-slate-500 p-4">
-        <%= case @pending_runner.ast do %>
-          <% {:ok, parsed, []} -> %>
-            <Node.show_node node={parsed} depth={0} path={[]} />
-          <% _ -> %>
-            parse error.
-        <% end %>
-        <button phx-click="push_node">+ assignment</button>
-      </div>
-      <div class="result bg-slate-200 w-full min-h-[24px] p-4">
-        <%= case @result do %>
-          <% nil -> %>
-            please start by evaluating a runner.
-          <% :error -> %>
-            something went wrong.
-          <% a -> %>
-            <Node.show_node node={a} depth={0} path={[]} />
-        <% end %>
-      </div>
-    </div>
-<% end %>
-
+  <% end %>
+</div>
 <style>
   .arena {
       width: 100%;

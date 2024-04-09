@@ -44,8 +44,19 @@ defmodule Ovo.Builtins do
       "lshift" => &lshift(&1, &2),
       "rshift" => &rshift(&1, &2),
       "xor" => &xor(&1, &2),
-      "overflow" => &overflow(&1, &2)
+      "overflow" => &overflow(&1, &2),
+      "hex" => &hex(&1, &2)
     }
+  end
+
+  defp hex(nodes, env) do
+    case map_nodes(nodes, env) do
+      [%{kind: :integer, value: v}] ->
+        Ovo.Ast.string(Integer.to_string(v, 16))
+
+      _ ->
+        :error
+    end
   end
 
   defp overflow(nodes, env) do

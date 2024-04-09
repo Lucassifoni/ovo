@@ -16,10 +16,10 @@ defmodule OvoDistributionTest do
     result
     """
 
-    {:ok, hash1} = Ovo.Runner.register(code1)
-    {:ok, hash2} = Ovo.Runner.register(code2)
+    {:ok, hash1} = Ovo.Runner.register(code1, "foo")
+    {:ok, hash2} = Ovo.Runner.register(code2, "bar")
 
-    assert hash2 == "juRoIieFP"
+    assert hash2 == "1I9J"
 
     assert %Ast{kind: :integer, value: 11, nodes: []} ==
              Ovo.Registry.run_chain([hash2, hash1], [5])
@@ -34,7 +34,7 @@ defmodule OvoDistributionTest do
              Ovo.Runner.shake(hash2)
 
     assert %Ast{kind: :integer, value: 16, nodes: []} ==
-             Ovo.Runner.run("juRoIieFP", [8])
+             Ovo.Runner.run("1I9J", [8])
   end
 
   test "program linking 2" do
@@ -48,8 +48,8 @@ defmodule OvoDistributionTest do
     add(arg(0), 1)
     """
 
-    {:ok, ovo_adder} = Ovo.Runner.register(adder)
-    {:ok, ovo_add_one} = Ovo.Runner.register(add_one)
+    {:ok, ovo_adder} = Ovo.Runner.register(adder, "foo")
+    {:ok, ovo_add_one} = Ovo.Runner.register(add_one, "bar")
 
     add_and_add_one = fn a, b ->
       Ovo.Registry.run_chain([ovo_adder, ovo_add_one], [a, b])
@@ -70,16 +70,16 @@ defmodule OvoDistributionTest do
     result
     """
 
-    {:ok, hash} = Ovo.Runner.register(code)
+    {:ok, hash} = Ovo.Runner.register(code, "foo")
 
-    assert hash == "juRoIieFP"
+    assert hash == "1I9J"
 
     code2 = """
     z = add(arg(0), 5)
-    invoke(`juRoIieFP`, [z])
+    invoke(`1I9J`, [z])
     """
 
-    {:ok, dependent_hash} = Ovo.Runner.register(code2)
+    {:ok, dependent_hash} = Ovo.Runner.register(code2, "bar")
 
     assert Ovo.Runner.run(dependent_hash, [3]) |> Ovo.Converter.ovo_to_elixir() == 16
   end
@@ -91,23 +91,32 @@ defmodule OvoDistributionTest do
     # Start some Ovo.Runners
 
     {:ok, ovo_adder} =
-      Ovo.Runner.register("""
-      add(arg(0), arg(1))
-      """)
+      Ovo.Runner.register(
+        """
+        add(arg(0), arg(1))
+        """,
+        "bar"
+      )
 
     {:ok, ovo_times2} =
-      Ovo.Runner.register("""
-      multiply(arg(0), 2)
-      """)
+      Ovo.Runner.register(
+        """
+        multiply(arg(0), 2)
+        """,
+        "baz"
+      )
 
     %Ovo.Ast{value: 5} = Ovo.Runner.run(ovo_adder, [2, 3])
     %Ovo.Ast{value: 10} = Ovo.Runner.run(ovo_times2, [5])
     %Ovo.Ast{value: 10} = Ovo.Registry.run_chain([ovo_adder, ovo_times2], [2, 3])
 
     {:ok, dependent_program} =
-      Ovo.Runner.register("""
-        invoke(`0ceaimhlh`, [2])
-      """)
+      Ovo.Runner.register(
+        """
+          invoke(`9toz`, [2])
+        """,
+        "test"
+      )
 
     %Ovo.Ast{value: 4} = Ovo.Runner.run(dependent_program, [])
     %Ovo.Ast{value: 4} = Ovo.Runner.shake(dependent_program)

@@ -8,13 +8,13 @@ defmodule OvoPlaygroundWeb.PageLive do
 
   alias OvoPlaygroundWeb.Components.Ovo.Node
 
-
-
   def initial_runner_state do
     ast = Transforms.default()
     code = Printer.print(ast)
+
     %{
       code: code,
+      name: "give me a name",
       args: [],
       ast: ast
     }
@@ -25,16 +25,20 @@ defmodule OvoPlaygroundWeb.PageLive do
   end
 
   def update_from_ast(socket, ast) do
-    new_runner = socket.assigns[:pending_runner]
+    new_runner =
+      socket.assigns[:pending_runner]
       |> Map.put(:code, Ovo.Printer.print(ast))
       |> Map.put(:ast, ast)
+
     socket |> assign(:pending_runner, new_runner)
   end
 
   def update_from_code(socket, code) do
-    new_runner = socket.assigns[:pending_runner]
-    |> Map.put(:code, code)
-    |> Map.put(:ast, Ovo.Tokenizer.tokenize(code) |> Ovo.Parser.parse)
+    new_runner =
+      socket.assigns[:pending_runner]
+      |> Map.put(:code, code)
+      |> Map.put(:ast, Ovo.Tokenizer.tokenize(code) |> Ovo.Parser.parse())
+
     socket |> assign(:pending_runner, new_runner)
   end
 
@@ -46,7 +50,11 @@ defmodule OvoPlaygroundWeb.PageLive do
        runners: Ovo.Registry.runners(),
        state: :idle,
        pending_chain: [],
-       chains: []
+       chains: [],
+       user: %{
+         name: System.get_env("NAME", "ovo_user"),
+         hue: System.get_env("HUE", "0deg")
+       }
      )}
   end
 
@@ -119,7 +127,7 @@ defmodule OvoPlaygroundWeb.PageLive do
   end
 
   def handle_event("push_node", _, socket) do
-    ast = Transforms.push_node(get_ast(socket), Transforms.default_assignment)
+    ast = Transforms.push_node(get_ast(socket), Transforms.default_assignment())
     {:noreply, update_from_ast(socket, ast)}
   end
 
@@ -216,9 +224,10 @@ defmodule OvoPlaygroundWeb.PageLive do
 
   def handle_event("register", _, socket) do
     code = socket.assigns[:pending_runner].code
+    name = socket.assigns[:pending_runner].name
     args = socket.assigns[:pending_runner].args
 
-    case Ovo.Runner.register(code, args) do
+    case Ovo.Runner.register(code, name, args) do
       {:ok, hash} ->
         {:noreply,
          socket
@@ -251,8 +260,10 @@ defmodule OvoPlaygroundWeb.PageLive do
     value = Map.get(params, "value", nil)
     ast = socket.assigns[:pending_runner].ast |> elem(1)
     path = string_to_path(rest)
+
     try do
       node = get_in(ast, path)
+
       new_value =
         case node do
           %Ovo.Ast{kind: :boolean} -> value
