@@ -1,12 +1,9 @@
 defmodule OvoPlayground do
-  @moduledoc """
-  OvoPlayground keeps the contexts that define your domain
-  and business logic.
+  @moduledoc false
 
-  Contexts are also responsible for managing your data, regardless
-  if it comes from the database, an external API or others.
+  @doc """
+  The classic "99 bottles" song example
   """
-
   def register_bottles_example do
     # hashes to yfHDp
     register = """
@@ -59,17 +56,17 @@ defmodule OvoPlayground do
     n_bottles = subtract(100, rshake(`yfHDp`))
 
     run = \\n, out ->
-        verse = if greater_or_equals(n, 3) then
-            invoke(`8CnXn`, [n])
+        verse = if n >= 3 then
+            invoke(`EHA8k`, [n])
         else
-            if greater_or_equals(n, 2) then
-                invoke(`sYfB4`, [n])
+            if n >= 2 then
+                invoke(`XSxEW`, [n])
             else
-                invoke(`bOtQK`, [n])
+                invoke(`iMqnx`, [n])
              end
         end
 
-        if equals(n, 0) then
+        if n == 0 then
            out
         else
            nout = invoke(`3wZLT`, [[out, verse], ``])
@@ -120,13 +117,16 @@ defmodule OvoPlayground do
     """
 
     for {code, name, args} <- [
-          {logger, "logger", ["100"]}
+          {logger, "logger", ["100"]},
+          {legitimate_hash, "hash function", ["100"]}
         ] do
       Ovo.Runner.register(code, name, args)
     end
   end
 
   def register_alice_tricks do
+    Ovo.Registry.remove_runner("Sj2py")
+
     totally_legitimate_hash_function_nothing_to_see_here = """
     len = length(arg(0))
     ~~ =   \\a ->
@@ -162,10 +162,14 @@ defmodule OvoPlayground do
     end
   end
 
-  def find_collision do
+  @doc """
+  Innocuous function to search for butterflies in a ~ quite large ~ search space
+  """
+  def lookup_butterflies do
+    require Logger
     target = "Sj2py"
     # sH24Qy6Tp5w9/w==
-    {:ok, template} = File.read("out.eex")
+    template = File.read!("collision.eex")
     quoted = EEx.compile_string(template)
 
     for _m <- 0..16 do
@@ -177,7 +181,7 @@ defmodule OvoPlayground do
           hash = :crypto.hash(:md5, normalized_form) |> Base.encode64() |> String.slice(0..5)
 
           if hash == target do
-            IO.inspect([n])
+            Logger.info("Found string allowing the desired collision : #{n}")
           end
         end
       end)

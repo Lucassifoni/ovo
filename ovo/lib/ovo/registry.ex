@@ -50,6 +50,12 @@ defmodule Ovo.Registry do
     end
   end
 
+  def remove_runner(hash) do
+    Agent.update(__MODULE__, fn state ->
+      state |> Map.drop([hash])
+    end)
+  end
+
   def register_runner(pid, hash, metadata \\ %{}) do
     Agent.update(__MODULE__, fn state ->
       state |> Map.put(hash, %{runner: pid, stack: [], last_env: %{}, metadata: metadata})
