@@ -2,7 +2,7 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
   use Phoenix.Component
   alias OvoPlaygroundWeb.Components.Ovo.Ast
   import OvoPlaygroundWeb.CoreComponents, only: [icon: 1]
-  defp path_to_string(path), do: Enum.map_join(path |> List.flatten(), ",", & &1)
+  defp path_to_string(path), do: Enum.map_join(path |> List.flatten(), "_", & &1)
 
   attr(:node, Ovo.Ast, required: true)
   attr(:depth, :integer, required: true)
@@ -11,7 +11,6 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
   def show_node(assigns) do
     ~H"""
     <div class={["border border-black ast-node", "ast-node-#{@node.kind}"]}>
-      <%= Jason.encode!(@path) %>
       <%= case @node.kind do %>
         <% :root -> %>
           <.traverse nodes={@node.nodes} path={["nodes" | @path]} />
@@ -76,7 +75,10 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
       inputmode="numeric"
       pattern="[0-9.]*"
       value={@node.value}
-      phx-keyup={"change_path:#{path_to_string(@path)}"}
+      phx-hook="update_node"
+      id={path_to_string(@path)}
+      data-path={path_to_string(@path)}
+      data-kind={@node.kind}
     />
     """
   end
@@ -92,7 +94,10 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
       inputmode="numeric"
       pattern="[0-9]*"
       value={@node.value}
-      phx-keyup={"change_path:#{path_to_string(@path)}"}
+      phx-hook="update_node"
+      id={path_to_string(@path)}
+      data-path={path_to_string(@path)}
+      data-kind={@node.kind}
     />
     """
   end
@@ -106,7 +111,14 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
     <%= if String.length(@node.value) > 50 do %>
       <textarea style="min-height: 100px"><%= @node.value %></textarea>
     <% else %>
-      <input type="text" value={@node.value} phx-keyup={"change_path:#{path_to_string(@path)}"} />
+      <input
+        type="text"
+        value={@node.value}
+        phx-hook="update_node"
+        id={path_to_string(@path)}
+        data-path={path_to_string(@path)}
+        data-kind={@node.kind}
+      />
     <% end %>
     """
   end
@@ -117,7 +129,14 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
   def symbol(assigns) do
     ~H"""
     <.node_label name="Symbol" />
-    <input type="text" value={@node.value} phx-keyup={"change_path:#{path_to_string(@path)}"} />
+    <input
+      type="text"
+      value={@node.value}
+      phx-hook="update_node"
+      id={path_to_string(@path)}
+      data-path={path_to_string(@path)}
+      data-kind={@node.kind}
+    />
     """
   end
 
@@ -127,7 +146,14 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
   def bool(assigns) do
     ~H"""
     <.node_label name="Boolean" /> <%= @node.value %>
-    <input type="checkbox" checked={@node.value} phx-click={"change_path:#{path_to_string(@path)}"} />
+    <input
+      type="checkbox"
+      checked={@node.value}
+      phx-hook="update_node"
+      id={path_to_string(@path)}
+      data-path={path_to_string(@path)}
+      data-kind={@node.kind}
+    />
     """
   end
 
@@ -162,7 +188,10 @@ defmodule OvoPlaygroundWeb.Components.Ovo.Node do
     <input
       type="text"
       value={@node.value.value}
-      phx-keyup={"change_path:#{path_to_string(["value" | @path])}"}
+      phx-hook="update_node"
+      id={path_to_string(@path)}
+      data-path={path_to_string(["value" | @path])}
+      data-kind={@node.kind}
     />
     <.icon name="hero-pause-circle-solid rotate-90" class="h-5 w-5" />
     <.show_node node={@node.nodes} path={["nodes" | @path]} />

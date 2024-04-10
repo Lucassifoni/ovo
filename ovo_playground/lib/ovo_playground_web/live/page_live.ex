@@ -97,15 +97,16 @@ defmodule OvoPlaygroundWeb.PageLive do
         },
         socket
       ) do
-    inti = String.to_integer(index)
+    int_index = String.to_integer(index)
     intai = String.to_integer(aindex)
 
     if socket.assigns.chains == [] do
       {:noreply, socket}
     else
       chain =
-        update_in(socket.assigns.chains, [Access.at!(inti), :args, Access.at!(intai)], fn _ ->
-          value
+        update_in(socket.assigns.chains, [Access.at!(int_index), :args, Access.at!(intai)], fn {k,
+                                                                                                _} ->
+          {k, value}
         end)
 
       {:noreply, socket |> assign(:chains, chain)}
@@ -115,7 +116,10 @@ defmodule OvoPlaygroundWeb.PageLive do
   def handle_event("run_chain", %{"chain_index" => index}, socket) do
     aindex = String.to_integer(index)
     c = socket.assigns.chains |> Enum.at(aindex)
-    args = c.args |> Enum.map(&Jason.decode!(&1))
+
+    args =
+      c.args
+      |> Enum.map(&Jason.decode!(elem(&1, 1)))
 
     {:noreply,
      assign(
@@ -151,7 +155,7 @@ defmodule OvoPlaygroundWeb.PageLive do
       Ovo.Runner.run(
         hash,
         Ovo.Registry.get_runner_args(hash)
-        |> Enum.map(&Jason.decode!/1)
+        |> Enum.map(&Jason.decode!(elem(&1, 1)))
       )
 
     {:noreply, socket |> update_runners |> assign(:result, result)}
@@ -178,8 +182,8 @@ defmodule OvoPlaygroundWeb.PageLive do
         },
         socket
       ) do
-    inti = String.to_integer(index)
-    Ovo.Registry.update_runner_arg(hash, inti, value)
+    int_index = String.to_integer(index)
+    Ovo.Registry.update_runner_arg(hash, int_index, value)
     {:noreply, socket}
   end
 
@@ -188,13 +192,33 @@ defmodule OvoPlaygroundWeb.PageLive do
      assign(socket,
        pending_runner: %{
          socket.assigns[:pending_runner]
-         | args: ["" | socket.assigns[:pending_runner].args]
+         | args: socket.assigns[:pending_runner].args ++ [{:text, ""}]
+       }
+     )}
+  end
+
+  def handle_event("change_name", %{"value" => v}, socket) do
+    {:noreply,
+     assign(socket,
+       pending_runner: %{
+         socket.assigns[:pending_runner]
+         | name: v
+       }
+     )}
+  end
+
+  def handle_event("add_secret_arg", _, socket) do
+    {:noreply,
+     assign(socket,
+       pending_runner: %{
+         socket.assigns[:pending_runner]
+         | args: socket.assigns[:pending_runner].args ++ [{:secret, ""}]
        }
      )}
   end
 
   def handle_event("change_arg", %{"index" => i, "value" => v}, socket) do
-    inti = i |> String.to_integer()
+    int_index = i |> String.to_integer()
 
     {:noreply,
      assign(socket,
@@ -202,13 +226,13 @@ defmodule OvoPlaygroundWeb.PageLive do
          socket.assigns[:pending_runner]
          | args:
              Enum.with_index(socket.assigns[:pending_runner].args)
-             |> Enum.map(fn {a, ix} -> if ix == inti, do: v, else: a end)
+             |> Enum.map(fn {{k, a}, ix} -> if ix == int_index, do: {k, v}, else: {k, a} end)
        }
      )}
   end
 
   def handle_event("delete_arg", %{"index" => i}, socket) do
-    inti = i |> String.to_integer()
+    int_index = i |> String.to_integer()
 
     {:noreply,
      assign(socket,
@@ -216,7 +240,7 @@ defmodule OvoPlaygroundWeb.PageLive do
          socket.assigns[:pending_runner]
          | args:
              Enum.with_index(socket.assigns[:pending_runner].args)
-             |> Enum.filter(fn {a, ix} -> ix != inti end)
+             |> Enum.filter(fn {_, ix} -> ix != int_index end)
              |> Enum.map(&elem(&1, 0))
        }
      )}
@@ -240,7 +264,7 @@ defmodule OvoPlaygroundWeb.PageLive do
   end
 
   defp string_to_path(str) do
-    String.split(str, ~r/,/)
+    String.split(str, ~r/_/)
     |> Enum.map(fn term ->
       case term do
         "value" -> Access.key!(:value)
@@ -256,36 +280,30 @@ defmodule OvoPlaygroundWeb.PageLive do
   def node_at_path(ast, [p | rest]), do: node_at_path(ast |> Enum.at(p), rest)
   def node_at_path(ast, []), do: ast
 
-  def handle_event("change_path:" <> rest, params, socket) do
-    value = Map.get(params, "value", nil)
+  def handle_event("change_path", %{"value" => value, "path" => str_path}, socket) do
     ast = socket.assigns[:pending_runner].ast |> elem(1)
-    path = string_to_path(rest)
+    path = string_to_path(str_path)
 
-    try do
-      node = get_in(ast, path)
+    node = get_in(ast, path)
 
-      new_value =
-        case node do
-          %Ovo.Ast{kind: :boolean} -> value
-          %Ovo.Ast{kind: :integer} -> String.to_integer(value)
-          %Ovo.Ast{kind: :float} -> Float.parse(value)
-          %Ovo.Ast{kind: :bool} -> !node.value
-          _ -> value
-        end
+    new_value =
+      case node do
+        %Ovo.Ast{kind: :boolean} -> value
+        %Ovo.Ast{kind: :integer} -> String.to_integer(value)
+        %Ovo.Ast{kind: :float} -> Float.parse(value)
+        %Ovo.Ast{kind: :bool} -> value
+        _ -> value
+      end
 
-      ast = update_in(ast, string_to_path(rest), fn a -> %Ovo.Ast{a | value: new_value} end)
+    ast = update_in(ast, path, fn a -> %Ovo.Ast{a | value: new_value} end)
 
-      {:noreply,
-       socket
-       |> assign(:pending_runner, %{
-         socket.assigns[:pending_runner]
-         | ast: {:ok, ast, []},
-           code: Ovo.Printer.print(ast)
-       })}
-    rescue
-      _ ->
-        {:noreply, socket}
-    end
+    {:noreply,
+     socket
+     |> assign(:pending_runner, %{
+       socket.assigns[:pending_runner]
+       | ast: {:ok, ast, []},
+         code: Ovo.Printer.print(ast)
+     })}
   end
 
   def handle_event("evaluate", _, socket) do
@@ -293,7 +311,7 @@ defmodule OvoPlaygroundWeb.PageLive do
 
     args =
       socket.assigns[:pending_runner].args
-      |> Enum.map(&Jason.decode!/1)
+      |> Enum.map(&Jason.decode!(elem(&1, 1)))
 
     case parsed do
       {:ok, ast, _} ->
@@ -309,7 +327,16 @@ defmodule OvoPlaygroundWeb.PageLive do
     end
   end
 
-  def handle_event(_, e, socket) do
+  def handle_event("sweep_rug", _, socket) do
+    case socket.assigns.user.name do
+      "alice" ->
+        OvoPlayground.register_alice_tricks()
+        {:noreply, socket |> update_runners}
+
+      _ ->
+        {:noreply, socket}
+    end
+
     {:noreply, socket}
   end
 

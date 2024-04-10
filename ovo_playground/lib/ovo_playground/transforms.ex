@@ -1,4 +1,6 @@
 defmodule OvoPlayground.Transforms do
+  alias Ovo.Ast
+
   @moduledoc """
   Transforms are functions that ultimately produce an Ovo.Ast,
   either from nothing, some input, an Ast, or combinations of these things.
@@ -10,7 +12,13 @@ defmodule OvoPlayground.Transforms do
   add(val, 10)
   """
 
-  defp produce(input) when is_binary(input), do: Ovo.tokenize(input) |> Ovo.parse()
+  defp produce(input) when is_binary(input) do
+    case Ovo.tokenize(input) |> Ovo.parse() do
+      {:ok, %{nodes: nodes}, []} -> nodes
+      _ -> []
+    end
+  end
+
   defp list([a]), do: [a]
   defp list(a), do: [a]
   defp nodes(%Ovo.Ast{nodes: nodes}), do: nodes
@@ -24,8 +32,12 @@ defmodule OvoPlayground.Transforms do
     fun.(ast)
   end
 
+  def wrap_root(nodes) do
+    Ast.root(nodes)
+  end
+
   def default() do
-    produce(@default_code)
+    Ovo.tokenize(@default_code) |> Ovo.parse()
   end
 
   def default_assignment() do

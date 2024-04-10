@@ -1,5 +1,14 @@
 <div class="p-2" style={"filter: hue-rotate(#{@user.hue})"}>
-  Welcome, <%= @user.name %> !
+  Welcome,
+  <%= case @user.name do %>
+    <% "alice" -> %>
+      <button class="bg-[rgba(255,255,255,0.2)]" phx-click="sweep_rug">
+        <%= @user.name %> !
+      </button>
+    <% _ -> %>
+      <%= @user.name %> !
+  <% end %>
+
   <%= case @state do %>
     <% :idle -> %>
       <div class="bg-slate-300 p-4">
@@ -9,7 +18,9 @@
             <div class="bg-slate-200 p-2 m-4 min-w-[240px]">
               <h4 class="mb-2 text-lg font-bold">
                 <%= runner.metadata.name %>
-                <span class="text-xs font-normal bg-white rounded"><%= hash %></span>
+                <span class="text-xs font-normal bg-white rounded">
+                  <%= hash %>
+                </span>
                 <button
                   class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
                   phx-click="chain"
@@ -21,19 +32,32 @@
               <%= for {arg, index} <- Enum.with_index(runner.metadata.args) do %>
                 <div>
                   Arg<%= index %>
-                  <input
-                    type="text"
-                    phx-keyup="change_runner_arg"
-                    phx-value-hash={runner.hash}
-                    phx-value-index={index}
-                    value={arg}
-                  />
+                  <%= case arg do %>
+                    <% {:text, a} -> %>
+                      <input
+                        type="text"
+                        id={"runner-#{runner.hash}-arg-#{index}"}
+                        phx-hook="change_runner_arg"
+                        data-hash={runner.hash}
+                        data-index={index}
+                        value={a}
+                      />
+                    <% {:secret, a} -> %>
+                      <input
+                        type="text"
+                        id={"runner-#{runner.hash}-arg-#{index}"}
+                        phx-hook="change_runner_arg"
+                        data-hash={runner.hash}
+                        data-index={index}
+                        value={a}
+                      />
+                  <% end %>
                 </div>
               <% end %>
 
               <pre class="text-xs font-mono bg-slate-700 text-white p-4 mb-2"><code><%= String.trim(runner.metadata.code) %></code></pre>
               <h4 class="mb-2">last results</h4>
-              <div class="max-w-[260px]">
+              <div class="max-w-[260px] max-h-[320px] overflow-y-scroll">
                 <%= for r <- runner.stack |> Enum.reverse do %>
                   <Node.show_node node={r} depth={0} path={[]} />
                 <% end %>
@@ -65,13 +89,26 @@
               <%= for {arg, aindex} <- Enum.with_index(chain.args) do %>
                 <div>
                   Arg <%= aindex %>
-                  <input
-                    type="text"
-                    phx-keyup="update_chain_arg"
-                    phx-value-chain_index={index}
-                    phx-value-arg_index={aindex}
-                    value={arg}
-                  />
+                  <%= case arg do %>
+                    <% {:text, a} -> %>
+                      <input
+                        type="text"
+                        id={"chain-arg-#{aindex}"}
+                        phx-hook="update_chain_arg"
+                        data-chain_index={index}
+                        data-arg_index={aindex}
+                        value={a}
+                      />
+                    <% {:secret, a} -> %>
+                      <input
+                        type="password"
+                        id={"chain-arg-#{aindex}"}
+                        phx-hook="update_chain_arg"
+                        data-chain_index={index}
+                        data-arg_index={aindex}
+                        value={a}
+                      />
+                  <% end %>
                 </div>
               <% end %>
               <button
@@ -86,7 +123,7 @@
         </div>
         <div>
           <h3>Last global result :</h3>
-          <%= if !is_nil(@result) and @result != :error do %>
+          <%= if !is_nil(@result) and @result !=:error do %>
             <Node.show_node node={@result} depth={0} path={[]} />
           <% end %>
         </div>
@@ -96,7 +133,7 @@
         >
           create a new runner
         </button>
-        <%= if @pending_chain != [] do %>
+        <%= if @pending_chain !=[] do %>
           <button
             class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
             phx-click="validate_chain"
@@ -113,17 +150,48 @@
         <div class="code bg-slate-300 p-4">
           <h4 class="mb-2">
             Args: <%= @pending_runner.args |> length %>
-            <.blue_button click="add_arg" label="+arg" />
           </h4>
-          <textarea phx-keyup="code_change">
+          <div class="mb-2">
+            <input
+              type="text"
+              value={@pending_runner.name}
+              phx-hook="watch_input"
+              data-event="change_name"
+              id="pending_runner_name_input"
+              placeholder="Your runner name"
+            />
+            <.blue_button click="add_arg" label="+arg" />
+            <.blue_button click="add_secret_arg" label="+ secret arg" />
+          </div>
+          <textarea phx-hook="change_code" id="pending_runner_code">
             <%= @pending_runner.code %>
-        </textarea>
+          </textarea>
 
           <%= for {arg, index} <- Enum.with_index(@pending_runner.args) do %>
             <div class="my-2">
               Arg<%= index %>
-              <input type="text" phx-keyup="change_arg" phx-value-index={index} value={arg} />
-              <button phx-click="delete_arg" phx-value-index={index}>x</button>
+              <%= case arg do %>
+                <% {:text, a} -> %>
+                  <input
+                    id={"pending-arg-#{index}"}
+                    type="text"
+                    phx-hook="watch_arg"
+                    data-event="change_arg"
+                    data-index={index}
+                    value={a}
+                  />
+                  <button phx-click="delete_arg" phx-value-index={index}>x</button>
+                <% {:secret, a} -> %>
+                  <input
+                    id={"pending-arg-#{index}"}
+                    type="password"
+                    phx-hook="watch_arg"
+                    data-event="change_arg"
+                    data-index={index}
+                    value={a}
+                  />
+                  <button phx-click="delete_arg" phx-value-index={index}>x</button>
+              <% end %>
             </div>
           <% end %>
 
@@ -142,7 +210,7 @@
             <% _ -> %>
               parse error.
           <% end %>
-          <button phx-click="push_node">+ assignment</button>
+          <.blue_button click="push_node" label="+ assignment"></.blue_button>
         </div>
         <div class="result bg-slate-200 w-full min-h-[24px] p-4">
           <%= case @result do %>
@@ -159,66 +227,66 @@
 </div>
 <style>
   .arena {
-      width: 100%;
-      display: flex;
-      flex-wrap: wrap;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
   }
 
   .code {
-      flex: 0 0 50%;
+    flex: 0 0 50%;
   }
 
   .code textarea {
-      width: 100%;
-      min-height: 10em;
+    width: 100%;
+    min-height: 10em;
   }
 
   .viewer {
-      flex: 0 0 50%;
+    flex: 0 0 50%;
   }
 
   .ast-node {
-      display: inline-block;
-      background: #eee;
-      position: relative;
-      min-height: 32px;
-      min-width: 80px;
-      padding: 2px 6px;
-      margin-bottom: 4px;
+    display: inline-block;
+    background: #eee;
+    position: relative;
+    min-height: 32px;
+    min-width: 80px;
+    padding: 2px 6px;
+    margin-bottom: 4px;
   }
 
   .ast-node-lambda,
   .ast-node-call {
-      padding-top: 16px;
+    padding-top: 16px;
   }
 
   .ast-node-expr,
   .ast-node-block {
-      padding: 0;
-      border: none;
+    padding: 0;
+    border: none;
   }
 
   .ast-node-root>.ast-node-expr {
-      display: block;
+    display: block;
   }
 
   .ast-node-block {
-      display: block;
+    display: block;
   }
 
   .ast-label {
-      position: absolute;
-      top: -3px;
-      right: -3px;
-      font-size: 8px;
-      background: wheat;
-      border-radius: 3px;
-      padding: 2px 4px;
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    font-size: 8px;
+    background: wheat;
+    border-radius: 3px;
+    padding: 2px 4px;
   }
 
   .ast-node-lambda .ast-label,
   .ast-node-call .ast-label {
-      right: auto;
-      left: 0;
+    right: auto;
+    left: 0;
   }
 </style>

@@ -67,7 +67,7 @@ defmodule Ovo.Registry do
       update_in(
         state,
         [Access.key!(hash), Access.key!(:metadata), Access.key!(:args), Access.at!(position)],
-        fn _ -> arg end
+        fn {k, _v} -> {k, arg} end
       )
     end)
   end

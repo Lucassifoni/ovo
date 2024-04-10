@@ -155,10 +155,26 @@ defmodule Ovo.Builtins do
     end
   end
 
+  defp get_host do
+    case "#{Node.self()}" |> String.split("@") do
+      [_, b] -> b
+      _ -> "nohost"
+    end
+  end
+
   defp invoke(nodes, env) do
     case map_nodes(nodes, env) do
       [%{kind: :string, value: hash}, %{kind: :list, nodes: ns}] ->
-        Ovo.Registry.run_chain([hash], ns)
+        {h, host} =
+          case String.split(hash, "@") do
+            [h] -> {h, Node.self()}
+            [h, node] -> {h, :"#{node}@#{get_host()}"}
+            [h, node, host] -> {h, :"#{node}@#{host}"}
+          end
+
+        :erpc.call(host, fn ->
+          Ovo.Registry.run_chain([h], ns)
+        end)
 
       _ ->
         :error

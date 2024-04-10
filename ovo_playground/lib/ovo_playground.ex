@@ -1,6 +1,33 @@
 defmodule OvoPlayground do
   @moduledoc false
 
+  def demo_setup do
+    case to_string(Node.self()) do
+      "bob@" <> _rest -> setup_bob()
+      "alice@" <> _rest -> setup_alice()
+      _ -> setup_bottles()
+    end
+  end
+
+  def setup_bob do
+    Node.set_cookie(:ovo_demo)
+    Node.connect(:"alice@MacBook-Air-de-Lucas.local")
+    register_bob_examples()
+  end
+
+  def setup_alice do
+    Node.set_cookie(:ovo_demo)
+    Node.connect(:"bob@MacBook-Air-de-Lucas.local")
+    register_alice_examples()
+  end
+
+  def setup_bottles do
+    register_bottles_example
+  end
+
+  def register_bob_examples do
+  end
+
   @doc """
   The classic "99 bottles" song example
   """
@@ -78,12 +105,12 @@ defmodule OvoPlayground do
     """
 
     for {code, name, args} <- [
-          {register, "register", ["0"]},
-          {filler, "filler", ["100"]},
-          {join, "joiner", ["[\"a\"]", "\" \""]},
-          {last_bottle, "last_bottle", ["1"]},
-          {two_bottles, "two_bottles", ["1"]},
-          {normal_bottles, "bottle", ["1"]},
+          {register, "register", [{:text, "0"}]},
+          {filler, "filler", [{:text, "100"}]},
+          {join, "joiner", [{:text, "[\"a\"]"}, {:text, "\" \""}]},
+          {last_bottle, "last_bottle", [{:text, "1"}]},
+          {two_bottles, "two_bottles", [{:text, "1"}]},
+          {normal_bottles, "bottle", [{:text, "1"}]},
           {full_song, "full_song", []}
         ] do
       Ovo.Runner.register(code, name, args)
@@ -111,14 +138,8 @@ defmodule OvoPlayground do
     hex(hash)
     """
 
-    # hashes to yfHDp
-    logger = """
-    arg(0)
-    """
-
     for {code, name, args} <- [
-          {logger, "logger", ["100"]},
-          {legitimate_hash, "hash function", ["100"]}
+          {legitimate_hash, "hash function", [{:secret, "the quick brown fox"}]}
         ] do
       Ovo.Runner.register(code, name, args)
     end
@@ -126,6 +147,11 @@ defmodule OvoPlayground do
 
   def register_alice_tricks do
     Ovo.Registry.remove_runner("Sj2py")
+
+    # hashes to yfHDp
+    logger = """
+    arg(0)
+    """
 
     totally_legitimate_hash_function_nothing_to_see_here = """
     len = length(arg(0))
@@ -155,8 +181,9 @@ defmodule OvoPlayground do
     """
 
     for {code, name, args} <- [
+          {logger, "logger", [{:text, "100"}]},
           {totally_legitimate_hash_function_nothing_to_see_here, "hash",
-           ["\"the quick brown fox\""]}
+           [{:secret, "\"the quick brown fox\""}]}
         ] do
       Ovo.Runner.register(code, name, args)
     end
