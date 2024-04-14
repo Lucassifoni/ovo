@@ -140,6 +140,9 @@ defmodule Ovo.Builtins do
       [%{kind: :string, value: v}, %{kind: :string, value: v2}] ->
         Ovo.Ast.string("#{v}#{v2}")
 
+      [%{kind: :list, nodes: n1}, %{kind: :list, nodes: n2}] ->
+        Ovo.Ast.list(n1 ++ n2)
+
       _ ->
         :error
     end
@@ -155,7 +158,7 @@ defmodule Ovo.Builtins do
     end
   end
 
-  defp get_host do
+  def get_host do
     case "#{Node.self()}" |> String.split("@") do
       [_, b] -> b
       _ -> "nohost"

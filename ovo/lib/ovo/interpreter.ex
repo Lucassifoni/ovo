@@ -57,6 +57,7 @@ defmodule Ovo.Interpreter do
     {env, v} = evaluate(rewritten, env)
 
     user_env = Env.get_user_env(env)
+
     stop_env(evaluator_pid)
 
     {v, user_env}
@@ -73,7 +74,7 @@ defmodule Ovo.Interpreter do
   def evaluate(nodes, env) when is_list(nodes), do: reduce_nodes(nodes, env)
 
   def evaluate(%Ovo.Ast{} = ast, env) do
-    case ast.kind do
+    res = case ast.kind do
       :root ->
         evaluate(ast.nodes, env)
 
@@ -108,7 +109,8 @@ defmodule Ovo.Interpreter do
 
              Agent.update(env, fn state ->
                shake_stack = Map.get(state.shakes, key, [])
-               put_in(state, [:shakes, key], [res | shake_stack])
+               out = put_in(state, [:shakes, key], [res | shake_stack])
+               out
              end)
 
              res
@@ -118,7 +120,7 @@ defmodule Ovo.Interpreter do
 
       :lambda ->
         arity = length(ast.value)
-        program = ast.nodes
+        program = Ovo.Rewrites.rw(ast.nodes)
         user_bindings = Env.user_bindings(env)
 
         {env,
@@ -196,6 +198,13 @@ defmodule Ovo.Interpreter do
 
       _ ->
         {env, ast}
+    end
+
+    case res do
+      {_, :error} ->
+        throw [ast, env]
+      _ ->
+      res
     end
   end
 end

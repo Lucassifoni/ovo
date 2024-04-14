@@ -48,7 +48,6 @@ defmodule Ovo.Rewrites do
         nodes: %Ovo.Ast{
           kind: :call,
           nodes: [
-            maparg0,
             %Ovo.Ast{
               kind: :lambda,
               nodes: %Ovo.Ast{
@@ -76,7 +75,11 @@ defmodule Ovo.Rewrites do
                   %Ovo.Ast{
                     kind: :condition,
                     nodes: [
-                      %Ovo.Ast{kind: :symbol, nodes: [], value: "mapped"},
+                      %Ovo.Ast{
+                        kind: :call,
+                        nodes: [%Ovo.Ast{kind: :symbol, nodes: [], value: "mapped"}],
+                        value: %Ovo.Ast{kind: :symbol, nodes: [], value: "filter_fn"}
+                      },
                       %Ovo.Ast{
                         kind: :block,
                         nodes: [
@@ -120,7 +123,9 @@ defmodule Ovo.Rewrites do
                 %Ovo.Ast{kind: :symbol, nodes: [], value: "acc"},
                 %Ovo.Ast{kind: :symbol, nodes: [], value: "i"}
               ]
-            }
+            },
+            maparg0,
+            %Ovo.Ast{kind: :list, nodes: [], value: nil}
           ],
           value: %Ovo.Ast{kind: :symbol, nodes: [], value: "reduce"}
         }
@@ -137,22 +142,5 @@ defmodule Ovo.Rewrites do
 
   def rewrite(%Ast{kind: k, value: v, nodes: nodes}) do
     %Ast{kind: k, value: rw(v), nodes: rw(nodes)}
-  end
-
-  def sample() do
-    """
-    foo = reduce(list, \\acc, i ->
-      map_fn = \\a -> 5 end
-      filter_fn = \\b -> T end
-      mapped = map_fn(i)
-      if mapped then
-        concat(acc, [mapped])
-      else
-        acc
-      end
-    end)
-    """
-    |> Ovo.Tokenizer.tokenize()
-    |> Ovo.Parser.parse()
   end
 end

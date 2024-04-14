@@ -139,7 +139,7 @@ defmodule OvoPlayground do
     """
 
     for {code, name, args} <- [
-          {legitimate_hash, "hash function", [{:secret, "the quick brown fox"}]}
+          {legitimate_hash, "hash function", [{:text, "\"the quick brown fox\""}]}
         ] do
       Ovo.Runner.register(code, name, args)
     end
