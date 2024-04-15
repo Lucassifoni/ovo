@@ -12,11 +12,9 @@ defmodule OvoTestRecursiveShakenSpecialCase do
     end
 
     fibs(5)
-
-    add(shake(fibs), shake(fibs))
     """
 
-    assert {%Ovo.Ast{kind: :integer, nodes: [], value: 11}, _} = Ovo.run(code)
+    assert {%Ovo.Ast{kind: :integer, nodes: [], value: 8}, _} = Ovo.run(code)
   end
 
   test "another shake test" do

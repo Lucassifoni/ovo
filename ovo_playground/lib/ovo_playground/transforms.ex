@@ -19,11 +19,6 @@ defmodule OvoPlayground.Transforms do
     end
   end
 
-  defp list([a]), do: [a]
-  defp list(a), do: [a]
-  defp nodes(%Ovo.Ast{nodes: nodes}), do: nodes
-  defp concat(a, b), do: list(a) ++ list(b)
-
   def maybe_rewrap({:ok, %Ovo.Ast{} = ast, []}, fun) do
     {:ok, fun.(ast), []}
   end
@@ -36,17 +31,17 @@ defmodule OvoPlayground.Transforms do
     Ast.root(nodes)
   end
 
-  def default() do
+  def default do
     Ovo.tokenize(@default_code) |> Ovo.parse()
   end
 
-  def default_assignment() do
+  def default_assignment do
     produce("foo = 5")
   end
 
   def push_node(arg, node) do
     maybe_rewrap(arg, fn a ->
-      %Ovo.Ast{a | nodes: concat(nodes(a), node)}
+      %Ovo.Ast{a | nodes: (a.nodes ++ node)}
     end)
   end
 end

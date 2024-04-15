@@ -22,10 +22,7 @@ defmodule OvoPlayground do
   end
 
   def setup_bottles do
-    register_bottles_example
-  end
-
-  def register_bob_examples do
+    register_bottles_example()
   end
 
   @doc """
@@ -145,15 +142,25 @@ defmodule OvoPlayground do
     end
   end
 
-  def register_alice_tricks do
-    Ovo.Registry.remove_runner("Sj2py")
+  def register_bob_examples do
+    hash_with_alice = """
+    invoke(`Sj2py@alice`, [arg(0)])
+    """
 
+    for {code, name, args} <- [
+          {hash_with_alice, "hash by Alice", [{:secret, "\"the quick brown fox\""}]}
+        ] do
+      Ovo.Runner.register(code, name, args)
+    end
+  end
+
+  def register_alice_tricks do
     # hashes to yfHDp
     logger = """
     arg(0)
     """
 
-    totally_legitimate_hash_function_nothing_to_see_here = """
+    hash_function = """
     len = length(arg(0))
     ~~ =   \\a ->
         overflow(a)
@@ -182,8 +189,7 @@ defmodule OvoPlayground do
 
     for {code, name, args} <- [
           {logger, "logger", [{:text, "100"}]},
-          {totally_legitimate_hash_function_nothing_to_see_here, "hash",
-           [{:secret, "\"the quick brown fox\""}]}
+          {hash_function, "hash", [{:secret, "\"the quick brown fox\""}]}
         ] do
       Ovo.Runner.register(code, name, args)
     end

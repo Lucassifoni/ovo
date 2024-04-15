@@ -22,7 +22,7 @@
                   <%= hash %>
                 </span>
                 <button
-                  class="bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
+                  class="ml-2 bg-slate-700 text-slate-100 px-2 py-1 mt-1 text-base rounded hover:bg-slate-500 transition-colors"
                   phx-click="chain"
                   phx-value-hash={hash}
                 >
@@ -30,7 +30,7 @@
                 </button>
               </h4>
               <%= for {arg, index} <- Enum.with_index(runner.metadata.args) do %>
-                <div>
+                <div class="mb-2">
                   Arg<%= index %>
                   <%= case arg do %>
                     <% {:text, a} -> %>
@@ -55,7 +55,7 @@
                 </div>
               <% end %>
 
-              <pre class="text-xs font-mono bg-slate-700 text-white p-4 mb-2"><code><%= String.trim(runner.metadata.code) %></code></pre>
+              <pre class="text-xs font-mono bg-slate-700 text-white p-4 mb-2 max-w-[280px] overflow-x-scroll"><code><%= String.trim(runner.metadata.code) %></code></pre>
               <h4 class="mb-2">last results</h4>
               <div class="max-w-[260px] max-h-[320px] overflow-y-scroll">
                 <%= for r <- runner.stack |> Enum.reverse do %>

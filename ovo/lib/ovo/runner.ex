@@ -23,15 +23,9 @@ defmodule Ovo.Runner do
     hash = :crypto.hash(:md5, normalized_form) |> Base.encode64() |> String.slice(0..4)
     Logger.info("Registered program with code #{code} at hash #{hash}")
 
-    case Ovo.Registry.find_runner(hash) do
-      {:ok, _pid} ->
-        {:ok, hash}
-
-      {:error, _} ->
-        case Ovo.Runner.instantiate(ast, code, name, hash, args) do
-          {:error, _reason} = e -> e
-          {:ok, _pid} -> {:ok, hash}
-        end
+    case Ovo.Runner.instantiate(ast, code, name, hash, args) do
+      {:error, _reason} = e -> e
+      :ok -> {:ok, hash}
     end
   end
 
@@ -63,8 +57,7 @@ defmodule Ovo.Runner do
 
   @spec instantiate(Ovo.Ast.t(), binary(), binary(), binary(), integer()) :: {:ok, pid()}
   def instantiate(ast, code, name, hash, args) do
-    {:ok, pid} = start_link(%__MODULE__{ast: ast, code: code, name: name, hash: hash})
-    Ovo.Registry.register_runner(pid, hash, %{code: code, name: name, args: args})
-    {:ok, pid}
+    Ovo.Registry.wrap_registration(ast, code, name, hash, args)
+    :ok
   end
 end

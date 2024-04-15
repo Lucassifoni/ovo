@@ -21,6 +21,10 @@ defmodule Ovo.Registry do
     )
   end
 
+  def stop do
+    Agent.stop(__MODULE__)
+  end
+
   defp view_runner(hash, %{metadata: metadata, stack: stack}) do
     %{
       stack: stack,
@@ -56,9 +60,10 @@ defmodule Ovo.Registry do
     end)
   end
 
-  def register_runner(pid, hash, metadata \\ %{}) do
+  def wrap_registration(ast, code, name, hash, args) do
     Agent.update(__MODULE__, fn state ->
-      state |> Map.put(hash, %{runner: pid, stack: [], last_env: %{}, metadata: metadata})
+      {:ok, pid} = Ovo.Runner.start_link(%Ovo.Runner{ast: ast, code: code, name: name, hash: hash})
+      state |> Map.put(hash, %{runner: pid, stack: [], last_env: %{}, metadata: %{code: code, name: name, args: args}})
     end)
   end
 
