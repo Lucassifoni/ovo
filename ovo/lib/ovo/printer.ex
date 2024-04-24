@@ -28,10 +28,8 @@ defmodule Ovo.Printer do
   end
 
   def print_node({:assignment, expr, sym}) do
-    case sym do
-      {_, _, {_, _, vv}} -> "#{vv} = #{print_node(expr)}"
-      {_, _, vv} -> "#{vv} = #{print_node(expr)}"
-    end
+    {_, _, vv} = sym
+    "#{vv} = #{print_node(expr)}"
   end
 
   def print_node({:shake, _, v}) do

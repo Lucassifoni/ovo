@@ -126,9 +126,9 @@ defmodule Ovo.Rewrites do
             },
             maparg0,
             {:list, [], nil}
-          ],
-          {:symbol, [], "reduce"}
-        }
+          ]
+        },
+        {:symbol, [], "reduce"},
       }
       | rewrite_node_list(rest)
     ]
