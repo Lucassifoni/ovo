@@ -1,5 +1,7 @@
 # Ovo
 
+## Warning : the playground does not work as of 2024-04-24 as I'm rewriting the Ast from structs to tuples.
+
 **Ovo is a small toy/side-project language**
 
 Ovo is hosted by Elixir.
