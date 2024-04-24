@@ -97,9 +97,9 @@ defmodule Ovo.Parser do
   Parses a primitive value.
 
       iex> Ovo.Parser.p_value([{:number, "5"}])
-      {:ok, %Ovo.Ast{kind: :integer, nodes: [], value: 5}, []}
+      {:ok, {:integer, [], 5}, []}
       iex> Ovo.Parser.p_value([{:string, "foo"}])
-      {:ok, %Ovo.Ast{kind: :string, nodes: [], value: "foo"}, []}
+      {:ok, {:string, [], "foo"}, []}
       iex> Ovo.Parser.p_value([{:arrow, nil}])
       {:error, [], [{:arrow, nil}]}
   """
@@ -178,7 +178,7 @@ defmodule Ovo.Parser do
 
   def p_argless_call(tokens) do
     case C.all([&p_symbol/1, C.match(:open_paren), C.match(:close_paren)]).(tokens) do
-      {:ok, [%Ast{kind: :symbol} = a | _], rest} -> {:ok, Ast.call(a), rest}
+      {:ok, [{:symbol, _, _} = a | _], rest} -> {:ok, Ast.call(a), rest}
       b -> b
     end
   end

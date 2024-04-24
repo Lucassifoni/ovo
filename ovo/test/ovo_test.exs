@@ -146,45 +146,45 @@ defmodule OvoTest do
 
   test "Parses an argless function call" do
     {:ok,
-     %Ovo.Ast{
-       kind: :root,
-       nodes: [
-         %Ovo.Ast{kind: :call, nodes: [], value: %Ovo.Ast{kind: :symbol, nodes: [], value: "foo"}}
+     {
+       :root,
+       [
+         {:call, [], {:symbol, [], "foo"}}
        ],
-       value: nil
+       nil
      }, []} = parse("foo()")
   end
 
   test "Parses a single-arg function call" do
     {:ok,
-     %Ovo.Ast{
-       kind: :root,
-       nodes: [
-         %Ovo.Ast{
-           kind: :call,
-           nodes: [%Ovo.Ast{kind: :symbol, nodes: [], value: "bar"}],
-           value: %Ovo.Ast{kind: :symbol, nodes: [], value: "foo"}
+     {
+       :root,
+       [
+         {
+           :call,
+           [{:symbol, [], "bar"}],
+           {:symbol, [], "foo"}
          }
        ],
-       value: nil
+       nil
      }, []} = parse("foo(bar)")
   end
 
   test "Parses a multi-arg function call" do
     {:ok,
-     %Ovo.Ast{
-       kind: :root,
-       nodes: [
-         %Ovo.Ast{
-           kind: :call,
-           nodes: [
-             %Ovo.Ast{kind: :symbol, nodes: [], value: "bar"},
-             %Ovo.Ast{kind: :symbol, nodes: [], value: "baz"}
+     {
+       :root,
+       [
+         {
+           :call,
+           [
+             {:symbol, [], "bar"},
+             {:symbol, [], "baz"}
            ],
-           value: %Ovo.Ast{kind: :symbol, nodes: [], value: "foo"}
+           {:symbol, [], "foo"}
          }
        ],
-       value: nil
+       nil
      }, []} = parse("foo(bar, baz)")
   end
 
@@ -310,7 +310,7 @@ defmodule OvoTest do
 
   test "basic evaluation" do
     program = "addone = \\a -> add(1, a) end addone(2)"
-    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program)
+    {{:integer, [], 3}, _} = Ovo.run(program)
   end
 
   test "basic evaluation 2" do
@@ -327,8 +327,8 @@ defmodule OvoTest do
       """
     end
 
-    {%Ovo.Ast{kind: :integer, nodes: [], value: 2}, _} = Ovo.run(program.(2))
-    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program.(0))
+    {{:integer, [], 2}, _} = Ovo.run(program.(2))
+    {{:integer, [], 3}, _} = Ovo.run(program.(0))
   end
 
   test "basic shakeing evaluation 2" do
@@ -349,8 +349,8 @@ defmodule OvoTest do
       """
     end
 
-    {%Ovo.Ast{kind: :integer, nodes: [], value: 2}, _} = Ovo.run(program.(2))
-    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program.(0))
+    {{:integer, [], 2}, _} = Ovo.run(program.(2))
+    {{:integer, [], 3}, _} = Ovo.run(program.(0))
   end
 
   test "basic recursion" do
@@ -365,7 +365,7 @@ defmodule OvoTest do
     radd(0)
     """
 
-    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program)
+    {{:integer, [], 3}, _} = Ovo.run(program)
   end
 
   test "basic recursion 2" do
@@ -382,7 +382,7 @@ defmodule OvoTest do
     radd(0)
     """
 
-    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program, %{})
+    {{:integer, [], 3}, _} = Ovo.run(program, %{})
   end
 
   test "basic recursion and nesting 3" do
@@ -407,7 +407,7 @@ defmodule OvoTest do
     radd(0)
     """
 
-    {%Ovo.Ast{kind: :integer, nodes: [], value: 3}, _} = Ovo.run(program)
+    {{:integer, [], 3}, _} = Ovo.run(program)
   end
 
   test "mutation tests" do
@@ -423,7 +423,7 @@ defmodule OvoTest do
       bar(5)
     """
 
-    {%Ovo.Ast{kind: :integer, nodes: [], value: 9}, _} = Ovo.run(program)
+    {{:integer, [], 9}, _} = Ovo.run(program)
   end
 
   test "rewrites a complex example" do
@@ -461,7 +461,7 @@ defmodule OvoTest do
     hex(hash)
     """
 
-    assert {%Ovo.Ast{kind: :string, nodes: [], value: "519E91F5"}, _} =
+    assert {{:string, [], "519E91F5"}, _} =
              Ovo.run(input, "The quick brown fox jumps over the lazy dog")
   end
 end

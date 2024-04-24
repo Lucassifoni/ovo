@@ -41,7 +41,7 @@ defmodule Ovo.Interpreter do
     run(ast, input)
   end
 
-  def run(%Ast{} = ast, input) do
+  def run(ast, input) do
     {:ok, evaluator_pid} = start_link([])
 
     ovo_input = Ovo.Converter.elixir_to_ovo(input)
@@ -73,138 +73,145 @@ defmodule Ovo.Interpreter do
   @spec evaluate(list(Ovo.Ast.t()) | Ovo.Ast.t(), pid()) :: {Ovo.Ast.t(), map()}
   def evaluate(nodes, env) when is_list(nodes), do: reduce_nodes(nodes, env)
 
-  def evaluate(%Ovo.Ast{} = ast, env) do
-    res = case ast.kind do
-      :root ->
-        evaluate(ast.nodes, env)
+  def evaluate(ast, env) when is_tuple(ast) and tuple_size(ast) == 3 do
+    {a_kind, a_nodes, a_value} = ast
 
-      :assignment ->
-        key = ast.value
-        {_, val} = evaluate(ast.nodes, env)
-        {Env.update_env(env, key.value, val), val}
+    res =
+      case a_kind do
+        :root ->
+          evaluate(a_nodes, env)
 
-      :block ->
-        evaluate(ast.nodes, env)
+        :assignment ->
+          key = a_value
+          {_, _, assi_v} = key
+          {_, val} = evaluate(a_nodes, env)
+          {Env.update_env(env, assi_v, val), val}
 
-      :condition ->
-        [predicate, branch1, branch2] = ast.nodes
-        {_, val} = evaluate(predicate, env)
+        :block ->
+          evaluate(a_nodes, env)
 
-        {_, v} =
-          case val do
-            %Ast{kind: :bool, value: true} -> evaluate(branch1, env)
-            %Ast{kind: :bool, value: false} -> evaluate(branch2, env)
-          end
+        :condition ->
+          [predicate, branch1, branch2] = a_nodes
+          {_, val} = evaluate(predicate, env)
 
-        {env, v}
+          {_, v} =
+            case val do
+              {:bool, _, true} -> evaluate(branch1, env)
+              {:bool, _, false} -> evaluate(branch2, env)
+            end
 
-      :shake ->
-        {_env, inner_fn} = evaluate(ast.value, env)
-        key = :crypto.strong_rand_bytes(16) |> Base.encode64() |> String.slice(0..16)
+          {env, v}
 
-        {env,
-         %{
-           callable: fn args ->
-             res = inner_fn.(args)
+        :shake ->
+          {_env, inner_fn} = evaluate(a_value, env)
+          key = :crypto.strong_rand_bytes(16) |> Base.encode64() |> String.slice(0..16)
 
-             Agent.update(env, fn state ->
-               shake_stack = Map.get(state.shakes, key, [])
-               out = put_in(state, [:shakes, key], [res | shake_stack])
-               out
-             end)
+          {env,
+           %{
+             callable: fn args ->
+               res = inner_fn.(args)
 
-             res
-           end,
-           key: key
-         }}
-
-      :lambda ->
-        arity = length(ast.value)
-        program = Ovo.Rewrites.rw(ast.nodes)
-        user_bindings = Env.user_bindings(env)
-
-        {env,
-         fn args ->
-           {:ok, captured_env} = Env.fork(env)
-
-           Env.update_captures(env, user_bindings)
-
-           if length(args) != arity do
-             {:error, "#{length(args)} argument(s) passed instead of #{arity}"}
-           else
-             symbols_and_args = Enum.zip(ast.value, args)
-
-             env_with_applied_args =
-               Enum.reduce(symbols_and_args, captured_env, fn {sym, arg}, uenv ->
-                 {_, v} = evaluate(arg, uenv)
-                 Env.update_env(uenv, sym.value, v)
-                 uenv
+               Agent.update(env, fn state ->
+                 shake_stack = Map.get(state.shakes, key, [])
+                 out = put_in(state, [:shakes, key], [res | shake_stack])
+                 out
                end)
 
-             {_, k} = evaluate(program, env_with_applied_args)
-             k
-           end
-         end}
+               res
+             end,
+             key: key
+           }}
 
-      :call ->
-        case Env.find_callable(ast.value.value, env) do
-          {:user, %{callable: fun}} ->
-            evaluated_args =
-              ast.nodes
-              |> Enum.map(fn node ->
-                {_, v} = evaluate(node, env)
-                v
-              end)
+        :lambda ->
+          arity = length(a_value)
+          program = Ovo.Rewrites.rw(a_nodes)
+          user_bindings = Env.user_bindings(env)
 
-            v = fun.(evaluated_args)
-            {env, v}
+          {env,
+           fn args ->
+             {:ok, captured_env} = Env.fork(env)
 
-          {:user, fun} ->
-            evaluated_args =
-              ast.nodes
-              |> Enum.map(fn node ->
-                {_, v} = evaluate(node, env)
-                v
-              end)
+             Env.update_captures(env, user_bindings)
 
-            v = fun.(evaluated_args)
-            {env, v}
+             if length(args) != arity do
+               {:error, "#{length(args)} argument(s) passed instead of #{arity}"}
+             else
+               symbols_and_args = Enum.zip(a_value, args)
 
-          {:builtins, fun} ->
-            r = fun.(ast.nodes, env)
-            {env, r}
+               env_with_applied_args =
+                 Enum.reduce(symbols_and_args, captured_env, fn {sym, arg}, uenv ->
+                   {_, _, sv} = sym
+                   {_, v} = evaluate(arg, uenv)
+                   Env.update_env(uenv, sv, v)
+                   uenv
+                 end)
 
-          {:error, msg} ->
-            throw({:error, msg})
-        end
+               {_, k} = evaluate(program, env_with_applied_args)
+               k
+             end
+           end}
 
-      :symbol ->
-        {env, Env.find_value(ast.value, env)}
+        :call ->
+          {_, _, nv} = a_value
 
-      :expr ->
-        evaluate(ast.value, env)
+          case Env.find_callable(nv, env) do
+            {:user, %{callable: fun}} ->
+              evaluated_args =
+                a_nodes
+                |> Enum.map(fn node ->
+                  {_, v} = evaluate(node, env)
+                  v
+                end)
 
-      :list ->
-        {env,
-         %Ast{
-           kind: :list,
-           value: nil,
-           nodes:
-             Enum.map(ast.nodes, fn n ->
+              v = fun.(evaluated_args)
+              {env, v}
+
+            {:user, fun} ->
+              evaluated_args =
+                a_nodes
+                |> Enum.map(fn node ->
+                  {_, v} = evaluate(node, env)
+                  v
+                end)
+
+              v = fun.(evaluated_args)
+              {env, v}
+
+            {:builtins, fun} ->
+              r = fun.(a_nodes, env)
+              {env, r}
+
+            {:error, msg} ->
+              throw({:error, msg})
+          end
+
+        :symbol ->
+          {env, Env.find_value(a_value, env)}
+
+        :expr ->
+          evaluate(a_value, env)
+
+        :list ->
+          {env,
+           {
+             :list,
+             Enum.map(a_nodes, fn n ->
                {_, r} = evaluate(n, env)
                r
-             end)
-         }}
+             end),
+             nil
+           }}
 
-      _ ->
-        {env, ast}
-    end
+        _ ->
+          {env, ast}
+      end
 
     case res do
       {_, :error} ->
-        throw [ast, env]
+        throw([ast, env])
+
       _ ->
-      res
+        res
     end
   end
 end

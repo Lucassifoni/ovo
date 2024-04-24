@@ -1,133 +1,133 @@
 defmodule Ovo.Rewrites do
   alias Ovo.Ast
 
-  def rewrite_node(%Ast{kind: :infix, value: op, nodes: [left, right]}) do
-    %Ast{
-      kind: :call,
-      value: %Ovo.Ast{kind: :symbol, nodes: [], value: Ovo.Infix.infix_to_builtin(op)},
-      nodes: [rw(left), rw(right)]
+  def rewrite_node({:infix, [left, right], op}) do
+    {
+      :call,
+      [rw(left), rw(right)],
+      {:symbol, [], Ovo.Infix.infix_to_builtin(op)}
     }
   end
 
-  def rewrite_node(%Ast{kind: k, value: v, nodes: n}),
-    do: %Ast{kind: k, value: rw(v), nodes: rw(n)}
+  def rewrite_node({k, v, n}),
+    do: {k, rw(v), rw(n)}
 
   def rewrite_node(b), do: b
 
   def rewrite_node_list([
-        %Ovo.Ast{
-          kind: :assignment,
-          nodes: %Ovo.Ast{
-            kind: :call,
-            nodes: [
+        {
+          :assignment,
+          {
+            :call,
+            [
               maparg0,
               maparg1
             ],
-            value: %Ovo.Ast{kind: :symbol, nodes: [], value: "map"}
+            {:symbol, [], "map"}
           },
-          value: %Ovo.Ast{kind: :symbol, nodes: [], value: name1}
+          {:symbol, [], name1}
         },
-        %Ovo.Ast{
-          kind: :assignment,
-          nodes: %Ovo.Ast{
-            kind: :call,
-            nodes: [
-              %Ovo.Ast{kind: :symbol, nodes: [], value: name1},
+        {
+          :assignment,
+          {
+            :call,
+            [
+              {:symbol, [], name1},
               filterarg1
             ],
-            value: %Ovo.Ast{kind: :symbol, nodes: [], value: "filter"}
+            {:symbol, [], "filter"}
           },
-          value: out
+          out
         }
         | rest
       ]) do
     [
-      %Ovo.Ast{
-        kind: :assignment,
-        value: out,
-        nodes: %Ovo.Ast{
-          kind: :call,
-          nodes: [
-            %Ovo.Ast{
-              kind: :lambda,
-              nodes: %Ovo.Ast{
-                kind: :block,
-                nodes: [
-                  %Ovo.Ast{
-                    kind: :assignment,
-                    nodes: maparg1,
-                    value: %Ovo.Ast{kind: :symbol, nodes: [], value: "map_fn"}
+      {
+        :assignment,
+        out,
+        {
+          :call,
+          [
+            {
+              :lambda,
+              {
+                :block,
+                [
+                  {
+                    :assignment,
+                    maparg1,
+                    {:symbol, [], "map_fn"}
                   },
-                  %Ovo.Ast{
-                    kind: :assignment,
-                    nodes: filterarg1,
-                    value: %Ovo.Ast{kind: :symbol, nodes: [], value: "filter_fn"}
+                  {
+                    :assignment,
+                    filterarg1,
+                    {:symbol, [], "filter_fn"}
                   },
-                  %Ovo.Ast{
-                    kind: :assignment,
-                    nodes: %Ovo.Ast{
-                      kind: :call,
-                      nodes: [%Ovo.Ast{kind: :symbol, nodes: [], value: "i"}],
-                      value: %Ovo.Ast{kind: :symbol, nodes: [], value: "map_fn"}
+                  {
+                    :assignment,
+                    {
+                      :call,
+                      [{:symbol, [], "i"}],
+                      {:symbol, [], "map_fn"}
                     },
-                    value: %Ovo.Ast{kind: :symbol, nodes: [], value: "mapped"}
+                    {:symbol, [], "mapped"}
                   },
-                  %Ovo.Ast{
-                    kind: :condition,
-                    nodes: [
-                      %Ovo.Ast{
-                        kind: :call,
-                        nodes: [%Ovo.Ast{kind: :symbol, nodes: [], value: "mapped"}],
-                        value: %Ovo.Ast{kind: :symbol, nodes: [], value: "filter_fn"}
+                  {
+                    :condition,
+                    [
+                      {
+                        :call,
+                        [{:symbol, [], "mapped"}],
+                        {:symbol, [], "filter_fn"}
                       },
-                      %Ovo.Ast{
-                        kind: :block,
-                        nodes: [
-                          %Ovo.Ast{
-                            kind: :call,
-                            nodes: [
-                              %Ovo.Ast{kind: :symbol, nodes: [], value: "acc"},
-                              %Ovo.Ast{
-                                kind: :list,
-                                nodes: [
-                                  %Ovo.Ast{
-                                    kind: :symbol,
-                                    nodes: [],
-                                    value: "mapped"
+                      {
+                        :block,
+                        [
+                          {
+                            :call,
+                            [
+                              {:symbol, [], "acc"},
+                              {
+                                :list,
+                                [
+                                  {
+                                    :symbol,
+                                    [],
+                                    "mapped"
                                   }
                                 ],
-                                value: nil
+                                nil
                               }
                             ],
-                            value: %Ovo.Ast{
-                              kind: :symbol,
-                              nodes: [],
-                              value: "concat"
+                            {
+                              :symbol,
+                              [],
+                              "concat"
                             }
                           }
                         ],
-                        value: nil
+                        nil
                       },
-                      %Ovo.Ast{
-                        kind: :block,
-                        nodes: [%Ovo.Ast{kind: :symbol, nodes: [], value: "acc"}],
-                        value: nil
+                      {
+                        :block,
+                        [{:symbol, [], "acc"}],
+                        nil
                       }
                     ],
-                    value: nil
+                    nil
                   }
                 ],
-                value: nil
+                nil
               },
-              value: [
-                %Ovo.Ast{kind: :symbol, nodes: [], value: "acc"},
-                %Ovo.Ast{kind: :symbol, nodes: [], value: "i"}
+              [
+                {:symbol, [], "acc"},
+                {:symbol, [], "i"}
               ]
             },
             maparg0,
-            %Ovo.Ast{kind: :list, nodes: [], value: nil}
+            {:list, [], nil}
           ],
-          value: %Ovo.Ast{kind: :symbol, nodes: [], value: "reduce"}
+          {:symbol, [], "reduce"}
         }
       }
       | rewrite_node_list(rest)
@@ -140,7 +140,7 @@ defmodule Ovo.Rewrites do
   def rw(a) when is_list(a), do: rewrite_node_list(a)
   def rw(a), do: rewrite_node(a)
 
-  def rewrite(%Ast{kind: k, value: v, nodes: nodes}) do
-    %Ast{kind: k, value: rw(v), nodes: rw(nodes)}
+  def rewrite({k, v, nodes}) do
+    {k, rw(v), rw(nodes)}
   end
 end

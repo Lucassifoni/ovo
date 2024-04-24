@@ -29,7 +29,7 @@ defmodule Ovo.Runner do
     end
   end
 
-  def to_positional_args(%Ovo.Ast{kind: :list, nodes: n}), do: to_positional_args(n)
+  def to_positional_args({:list, n, _}), do: to_positional_args(n)
 
   def to_positional_args(inputs) when is_list(inputs) do
     Enum.with_index(inputs)

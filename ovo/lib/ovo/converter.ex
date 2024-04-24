@@ -5,7 +5,6 @@ defmodule Ovo.Converter do
   alias Ovo.Ast
 
   @spec elixir_to_ovo(term()) :: Ovo.Ast.t()
-  def elixir_to_ovo(%Ast{} = term), do: term
   def elixir_to_ovo(term) when is_integer(term), do: Ast.integer(term)
   def elixir_to_ovo(term) when is_number(term), do: Ast.float(term)
   def elixir_to_ovo(term) when is_number(term), do: Ast.float(term)
@@ -16,16 +15,17 @@ defmodule Ovo.Converter do
   def elixir_to_ovo(term) when is_map(term),
     do: Ast.map(Enum.map(term, fn {k, v} -> {k, elixir_to_ovo(v)} end) |> Enum.into(%{}))
 
+  def elixir_to_ovo(term), do: term
   @spec elixir_to_ovo(Ovo.Ast.t()) :: term()
-  def ovo_to_elixir(%Ast{kind: :bool, value: v}), do: v
-  def ovo_to_elixir(%Ast{kind: :float, value: v}), do: v
-  def ovo_to_elixir(%Ast{kind: :integer, value: v}), do: v
-  def ovo_to_elixir(%Ast{kind: :string, value: v}), do: v
-  def ovo_to_elixir(%Ast{kind: :symbol, value: v}), do: v
-  def ovo_to_elixir(%Ast{kind: :expr, value: v}), do: ovo_to_elixir(v)
+  def ovo_to_elixir({:bool, _, v}), do: v
+  def ovo_to_elixir({:float, _, v}), do: v
+  def ovo_to_elixir({:integer, _, v}), do: v
+  def ovo_to_elixir({:string, _, v}), do: v
+  def ovo_to_elixir({:symbol, _, v}), do: v
+  def ovo_to_elixir({:expr, _, v}), do: ovo_to_elixir(v)
 
-  def ovo_to_elixir(%Ast{kind: :map, value: v}),
+  def ovo_to_elixir({:map, _, v}),
     do: v |> Enum.map(fn {k, v1} -> {k, ovo_to_elixir(v1)} end) |> Enum.into(%{})
 
-  def ovo_to_elixir(%Ast{kind: :list, nodes: n}), do: n |> Enum.map(&ovo_to_elixir/1)
+  def ovo_to_elixir({:list, n, _}), do: n |> Enum.map(&ovo_to_elixir/1)
 end

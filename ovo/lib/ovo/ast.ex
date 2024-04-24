@@ -29,19 +29,14 @@ defmodule Ovo.Ast do
   @typedoc """
   An Ast node.
   """
-  @type t :: %__MODULE__{
-          kind: kind(),
-          nodes: list(t()),
-          value: term()
-        }
-  defstruct [:kind, :nodes, :value]
+  @type t :: {kind(), list(t()), term()}
 
   @doc """
   Helper to instantiate Ast Nodes.
   """
   @spec make(kind(), term(), list(t())) :: t()
   def make(kind, value, children),
-    do: %__MODULE__{kind: kind, nodes: children, value: value}
+    do: {kind, children, value}
 
   @doc """
   Instantiates a root node.
@@ -102,21 +97,21 @@ defmodule Ovo.Ast do
   Currently used for parenthesized expressions, but will certainly be refactored out later.
   """
   @spec expr(t() | list(t())) :: t()
-  def expr([val]) when is_struct(val, Ast), do: make(:expr, val, [])
-  def expr(val) when is_struct(val, Ast), do: val
+  def expr([val]) when is_tuple(val), do: make(:expr, val, [])
+  def expr(val) when is_tuple(val), do: val
 
   @doc """
   Instantiates an assignment node, where symbol must be a symbol node and expr an Ast node.
   """
   @spec assignment(t(), t()) :: t()
-  def assignment(symbol, expr) when is_struct(symbol, Ast) and is_struct(expr, Ast),
+  def assignment(symbol, expr) when is_tuple(symbol) and is_tuple(expr),
     do: make(:assignment, symbol, expr)
 
   @doc """
   Instantiates a shakable lambda node, where lambda must be a Lambda ast node.
   """
   @spec shake(t()) :: t()
-  def shake(lambda) when is_struct(lambda, Ast), do: make(:shake, lambda, [])
+  def shake(lambda) when is_tuple(lambda), do: make(:shake, lambda, [])
 
   @doc """
   Instantiates a block node. Will probably be removed.

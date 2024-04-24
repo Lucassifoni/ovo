@@ -14,7 +14,7 @@ defmodule OvoTestRecursiveShakenSpecialCase do
     fibs(5)
     """
 
-    assert {%Ovo.Ast{kind: :integer, nodes: [], value: 8}, _} = Ovo.run(code)
+    assert {{:integer, [], 8}, _} = Ovo.run(code)
   end
 
   test "another shake test" do
@@ -28,7 +28,7 @@ defmodule OvoTestRecursiveShakenSpecialCase do
     add(a, shake(add_one))
     """
 
-    assert {%Ovo.Ast{kind: :integer, nodes: [], value: 7}, _} = Ovo.run(code)
+    assert {{:integer, [], 7}, _} = Ovo.run(code)
   end
 
   test "access test" do
@@ -38,6 +38,6 @@ defmodule OvoTestRecursiveShakenSpecialCase do
     add_one(fonk)
     """
 
-    assert {%Ovo.Ast{kind: :integer, nodes: [], value: 2}, _} = Ovo.run(code, %{"arg0" => 1})
+    assert {{:integer, [], 2}, _} = Ovo.run(code, %{"arg0" => 1})
   end
 end

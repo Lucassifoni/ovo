@@ -51,7 +51,7 @@ defmodule Ovo.Builtins do
 
   defp hex(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: :integer, value: v}] ->
+      [{:integer, _, v}] ->
         Ovo.Ast.string(Integer.to_string(v, 16))
 
       _ ->
@@ -63,7 +63,7 @@ defmodule Ovo.Builtins do
     import Bitwise
 
     case map_nodes(nodes, env) do
-      [%{kind: :integer, value: v}] ->
+      [{:integer, _, v}] ->
         Ovo.Ast.integer(v &&& 0xFFFFFFFF)
 
       _ ->
@@ -75,7 +75,7 @@ defmodule Ovo.Builtins do
     import Bitwise
 
     case map_nodes(nodes, env) do
-      [%{kind: :integer, value: v}, %{kind: :integer, value: v1}] ->
+      [{:integer, _, v}, {:integer, _, v1}] ->
         Ovo.Ast.integer(v <<< v1)
 
       _ ->
@@ -87,7 +87,7 @@ defmodule Ovo.Builtins do
     import Bitwise
 
     case map_nodes(nodes, env) do
-      [%{kind: :integer, value: v}, %{kind: :integer, value: v1}] ->
+      [{:integer, _, v}, {:integer, _, v1}] ->
         Ovo.Ast.integer(v >>> v1)
 
       _ ->
@@ -99,7 +99,7 @@ defmodule Ovo.Builtins do
     import Bitwise
 
     case map_nodes(nodes, env) do
-      [%{kind: :integer, value: v}, %{kind: :integer, value: v1}] ->
+      [{:integer, _, v}, {:integer, _, v1}] ->
         Ovo.Ast.integer(bxor(v, v1))
 
       _ ->
@@ -109,7 +109,7 @@ defmodule Ovo.Builtins do
 
   defp intval(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: :string, value: v}] ->
+      [{:string, _, v}] ->
         <<k::utf8>> = v
         Ovo.Ast.integer(k)
 
@@ -120,14 +120,14 @@ defmodule Ovo.Builtins do
 
   defp o_len(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: :string, value: v}] -> Ovo.Ast.integer(String.length(v))
+      [{:string, _, v}] -> Ovo.Ast.integer(String.length(v))
       _ -> :error
     end
   end
 
   defp at(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: :string, value: v}, %{kind: :integer, value: v1}] ->
+      [{:string, _, v}, {:integer, _, v1}] ->
         Ovo.Ast.string(String.at(v, v1))
 
       _ ->
@@ -137,10 +137,10 @@ defmodule Ovo.Builtins do
 
   defp concat(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: :string, value: v}, %{kind: :string, value: v2}] ->
+      [{:string, _, v}, {:string, _, v2}] ->
         Ovo.Ast.string("#{v}#{v2}")
 
-      [%{kind: :list, nodes: n1}, %{kind: :list, nodes: n2}] ->
+      [{:list, n1, _}, {:list, n2, _}] ->
         Ovo.Ast.list(n1 ++ n2)
 
       _ ->
@@ -150,7 +150,7 @@ defmodule Ovo.Builtins do
 
   defp to_string(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: k, value: v}] when k in [:string, :float, :integer] ->
+      [{k, _, v}] when k in [:string, :float, :integer] ->
         Ovo.Ast.string("#{v}")
 
       _ ->
@@ -167,7 +167,7 @@ defmodule Ovo.Builtins do
 
   defp invoke(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: :string, value: hash}, %{kind: :list, nodes: ns}] ->
+      [{:string, _, hash}, {:list, ns, _}] ->
         {h, host} =
           case String.split(hash, "@") do
             [h] -> {h, Node.self()}
@@ -193,9 +193,9 @@ defmodule Ovo.Builtins do
 
   defp arg(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: :integer, value: v}] ->
-        data = Ovo.Env.find_value("data", env)
-        Map.get(data.value, "arg#{v}")
+      [{:integer, _, v}] ->
+        {_, _, data} = Ovo.Env.find_value("data", env)
+        Map.get(data, "arg#{v}")
 
       _ ->
         :error
@@ -204,9 +204,9 @@ defmodule Ovo.Builtins do
 
   defp access(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: :string, value: v}] ->
-        data = Ovo.Env.find_value("data", env)
-        Map.get(data.value, v)
+      [{:string, _, v}] ->
+        {_, _, data} = Ovo.Env.find_value("data", env)
+        Map.get(data, v)
 
       _ ->
         :error
@@ -215,7 +215,7 @@ defmodule Ovo.Builtins do
 
   defp compare(nodes, env, operator) do
     case map_nodes(nodes, env) do
-      [%{kind: k1, value: v1}, %{kind: k2, value: v2}]
+      [{k1, _, v1}, {k2, _, v2}]
       when k1 in [:float, :integer] and k2 in [:float, :integer] ->
         Ovo.Ast.bool(operator.(v1, v2))
 
@@ -230,7 +230,7 @@ defmodule Ovo.Builtins do
   def strictly_smaller(nodes, env), do: compare(nodes, env, &Kernel.</2)
 
   def different(nodes, env) do
-    %Ast{value: v} = equals(nodes, env)
+    {_, _, v} = equals(nodes, env)
     Ovo.Ast.bool(not v)
   end
 
@@ -260,7 +260,7 @@ defmodule Ovo.Builtins do
 
   defp rshake(nodes, env) do
     case map_nodes(nodes, env) do
-      [%{kind: :string, value: v}] ->
+      [{:string, _, v}] ->
         Ovo.Runner.shake(v)
 
       _ ->
@@ -270,7 +270,7 @@ defmodule Ovo.Builtins do
 
   defp map(nodes, env) do
     case map_nodes(nodes, env) do
-      [fun, %Ast{kind: :list, nodes: items}] when is_function(fun) ->
+      [fun, {:list, items, _}] when is_function(fun) ->
         Ovo.Ast.list(Enum.map(items, fn i -> fun.([i]) end))
 
       _ ->
@@ -280,7 +280,7 @@ defmodule Ovo.Builtins do
 
   defp filter(nodes, env) do
     case map_nodes(nodes, env) do
-      [fun, %Ast{kind: :list, nodes: items}] when is_function(fun) ->
+      [fun, {:list, items, _}] when is_function(fun) ->
         Ovo.Ast.list(Enum.filter(items, fn i -> fun.([i]) end))
 
       _ ->
@@ -290,7 +290,7 @@ defmodule Ovo.Builtins do
 
   defp reduce(nodes, env) do
     case map_nodes(nodes, env) do
-      [fun, %Ast{kind: :list, nodes: items}, %Ast{} = initial_value] when is_function(fun) ->
+      [fun, {:list, items, _}, {} = initial_value] when is_function(fun) ->
         Enum.reduce(items, initial_value, fn i, acc ->
           fun.([acc, i])
         end)
@@ -302,13 +302,13 @@ defmodule Ovo.Builtins do
 
   defp add(nodes, env) do
     case map_nodes(nodes, env) do
-      [%Ast{kind: :integer, value: v1}, %Ast{kind: :integer, value: v2}] ->
+      [{:integer, _, v1}, {:integer, _, v2}] ->
         Ast.integer(v1 + v2)
 
-      [%Ast{kind: :float, value: v1}, %Ast{kind: :float, value: v2}] ->
+      [{:float, _, v1}, {:float, _, v2}] ->
         Ast.float(v1 + v2)
 
-      [%Ast{kind: k1, value: v1}, %Ast{kind: k2, value: v2}]
+      [{k1, _, v1}, {k2, _, v2}]
       when k1 in [:integer, :float] and k2 in [:integer, :float] ->
         Ast.float(v1 + v2)
 
@@ -319,13 +319,13 @@ defmodule Ovo.Builtins do
 
   defp subtract(nodes, env) do
     case map_nodes(nodes, env) do
-      [%Ast{kind: :integer, value: v1}, %Ast{kind: :integer, value: v2}] ->
+      [{:integer, _, v1}, {:integer, _, v2}] ->
         Ast.integer(v1 - v2)
 
-      [%Ast{kind: :float, value: v1}, %Ast{kind: :float, value: v2}] ->
+      [{:float, _, v1}, {:float, _, v2}] ->
         Ast.float(v1 - v2)
 
-      [%Ast{kind: k1, value: v1}, %Ast{kind: k2, value: v2}]
+      [{k1, _, v1}, {k2, _, v2}]
       when k1 in [:integer, :float] and k2 in [:integer, :float] ->
         Ast.float(v1 - v2)
 
@@ -336,13 +336,13 @@ defmodule Ovo.Builtins do
 
   defp multiply(nodes, env) do
     case map_nodes(nodes, env) do
-      [%Ast{kind: :integer, value: v1}, %Ast{kind: :integer, value: v2}] ->
+      [{:integer, _, v1}, {:integer, _, v2}] ->
         Ast.integer(v1 * v2)
 
-      [%Ast{kind: :float, value: v1}, %Ast{kind: :float, value: v2}] ->
+      [{:float, _, v1}, {:float, _, v2}] ->
         Ast.float(v1 * v2)
 
-      [%Ast{kind: k1, value: v1}, %Ast{kind: k2, value: v2}]
+      [{k1, _, v1}, {k2, _, v2}]
       when k1 in [:integer, :float] and k2 in [:integer, :float] ->
         Ast.float(v1 * v2)
 
@@ -353,13 +353,13 @@ defmodule Ovo.Builtins do
 
   defp divide(nodes, env) do
     case map_nodes(nodes, env) do
-      [%Ast{kind: :integer, value: v1}, %Ast{kind: :integer, value: v2}] ->
+      [{:integer, _, v1}, {:integer, _, v2}] ->
         Ast.integer(v1 / v2)
 
-      [%Ast{kind: :float, value: v1}, %Ast{kind: :float, value: v2}] ->
+      [{:float, _, v1}, {:float, _, v2}] ->
         Ast.float(v1 / v2)
 
-      [%Ast{kind: k1, value: v1}, %Ast{kind: k2, value: v2}]
+      [{k1, _, v1}, {k2, _, v2}]
       when k1 in [:integer, :float] and k2 in [:integer, :float] ->
         Ast.float(v1 / v2)
 
@@ -370,14 +370,14 @@ defmodule Ovo.Builtins do
 
   defp map_access(nodes, env) do
     case map_nodes(nodes, env) do
-      [%Ast{kind: :map, value: v}, %Ast{kind: :string, value: v2}] -> Map.get(v, v2)
+      [{:map, _, v}, {:string, _, v2}] -> Map.get(v, v2)
       _ -> :error
     end
   end
 
   defp map_set(nodes, env) do
     case map_nodes(nodes, env) do
-      [%Ast{kind: :map, value: v}, %Ast{kind: :string, value: v2}, %Ast{} = v3] ->
+      [{:map, _, v}, {:string, _, v2}, {} = v3] ->
         Map.put(v, v2, v3)
 
       _ ->

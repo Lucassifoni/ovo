@@ -41,7 +41,7 @@ defmodule Ovo do
   Runs Ovo code through the interpreter
 
       iex> Ovo.run("addone = \\a -> add(1, a) end addone(2)")
-      iex> {%Ovo.Ast{kind: :integer, nodes: [], value: 3}}
+      iex> {{:integer, [], 3}}
 
   """
   def run(code, input \\ %{}), do: Ovo.Interpreter.run(code, input)

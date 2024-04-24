@@ -62,8 +62,16 @@ defmodule Ovo.Registry do
 
   def wrap_registration(ast, code, name, hash, args) do
     Agent.update(__MODULE__, fn state ->
-      {:ok, pid} = Ovo.Runner.start_link(%Ovo.Runner{ast: ast, code: code, name: name, hash: hash})
-      state |> Map.put(hash, %{runner: pid, stack: [], last_env: %{}, metadata: %{code: code, name: name, args: args}})
+      {:ok, pid} =
+        Ovo.Runner.start_link(%Ovo.Runner{ast: ast, code: code, name: name, hash: hash})
+
+      state
+      |> Map.put(hash, %{
+        runner: pid,
+        stack: [],
+        last_env: %{},
+        metadata: %{code: code, name: name, args: args}
+      })
     end)
   end
 
