@@ -1,6 +1,6 @@
 # Ovo
 
-## Warning : the playground does not work as of 2024-04-24 as I'm rewriting the Ast from structs to tuples.
+Ovo continues at https://github.com/alzo-archi/ovo, without the weird parts :-) .
 
 **Ovo is a small toy/side-project language**
 
